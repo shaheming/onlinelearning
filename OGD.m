@@ -20,8 +20,8 @@ for i = 0 : 999
     x_t = project(y,Xb,Xe);
     y = y + (1 / (i+1))*((Ut_z(x_t,Z,G,eta)));
     outx = [outx,x_t];
-    outy = [outy,y];
-    outr = [outr,Ut(x_t,Z,G,eta) - Ut(50,Z,G,eta)];
+    outy = [outy,Ut(x_t,Z,G,eta) - Ut(100,Z,G,eta)];
+    outr = [outr,sum(outr)+outy(i+1)];
 end
 disp('End Loop');
 
