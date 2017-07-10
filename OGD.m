@@ -10,26 +10,25 @@ Ex_n = 1000;
 D = 1;
 eta = 1;
 % output variable
-outx = [];
+outx = zeros(1,T);
 outy = [];
-outr = [];
-myRewards = [];
-experts =Xe * rand(Ex_n,1);
+outr = zeros(1,T);
+myRewards = zeros(1,T);
 expertsRewards = zeros(1,Ex_n);
-
+experts =(Xe * rand(Ex_n,1))';
 % the initial y
 y = 50.5;
 disp('Begin Loop');
+fprintf('Iterate %d turns',T);
 for i = 0 : T 
     Z = D * rand(99,1);
     x_t = project(y,Xb,Xe);
     y = y + (1 / (i+1))*((Ut_z(x_t,Z,G,eta)));
-    outx = [outx,x_t];
-    tmp_xt = zeros(1,Ex_n);
-    myRewards = [myRewards,Ut(x_t,Z,G,eta)];
+    outx(i+1) = x_t;
+    myRewards(i+1)  = Ut(x_t,Z,G,eta);
     expertsRewards =expertsRewards + Ut(experts,Z,G,eta);
-%     outy = [outy,myRewards(i+1) - min(Ut(experts,Z,G,eta))];
-    outr = [outr,sum(myRewards) - max(expertsRewards)];
+%   outy = [outy,myRewards(i+1) - min(Ut(experts,Z,G,eta))];
+    outr(i+1) = sum(myRewards) - max(expertsRewards);
 end
 disp('End Loop');
 
