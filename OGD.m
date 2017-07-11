@@ -1,11 +1,13 @@
-% Set turns
-T = 2000;
+%use doubling tricking to iterate
+M = 17; % 2 ^ 15 = 32768
+% the maxiums turn will iterate T times;
+T = 2^(M-1);
 % G is  positive retional number begin with 1
 N = 100; % N is used to set G and Z
 global G;
 G = ones(1,N);
 global Z;
-Z = zeros(N-1,1)
+Z = zeros(N-1,1);
 % your decision domain used in projection
 global x_bound;
 x_bound = [0,100];
@@ -34,7 +36,32 @@ myRewards = zeros(1,T);
 global y;
 y = 0.5;
 
-OGD_Primary(T);
+doubling(M);
+
+function doubling(M)
+  
+   experts=zeros(1,M);
+   myChoices=zeros(1,M);
+   regrets=zeros(1,M);
+  regrets_div_t=zeros(1,M);
+  for m = 1 : M
+   [myChoices(m),experts(m), regrets(m)]=iteration(2^(m-1),2^(m));
+   regrets_div_t(m) = regrets(m)/2^m;
+  end
+  
+  figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
+  plot(experts,'DisplayName','experts');
+  hold on;
+  plot(myChoices,'DisplayName','mychoice');
+  legend('experts','mychoice');
+  hold off;
+  figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
+  plot(regrets);
+  figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
+  plot(regrets_div_t);
+end
+
+% OGD_Primary(T);
 
 
 function out = OGD_Primary(T)
@@ -96,7 +123,7 @@ function [x_t,expert,regret] = iteration(t_b,t_e)
   global myChoices;
   global myRewards;
   global y;
-  u = 0
+  u = 0;
   slot_end = t_e - t_b + 1;
 
   for t = 1 : slot_end
@@ -123,8 +150,8 @@ function [x_t,expert,regret] = iteration(t_b,t_e)
     %   disp([myReward,expertsRewards(t)])
     %   end
   end
-  x_t =  myChoices(slot_end)
-  expert = experts(slot_end)
-  regret = regrets(slot_end)
+  x_t =  myChoices(slot_end);
+  expert = experts(slot_end);
+  regret = regrets(slot_end);
 end
 
