@@ -46,7 +46,7 @@ for t = 1 : T
 %   myReward = Ut_new(x_t,gzs,eta,t,G);
 %   outy = [outy,myRewards(t+1) - mtn(Ut(experts,Z,G,eta))];
     expertsRewards(t) = Ut_new(experts(t),gzs,eta,t,G);
-    regrets(t) = sum(myRewards(t)) - expertsRewards(t); 
+    regrets(t) = sum(myRewards(1:t)) - expertsRewards(t); 
     regrets_div_t(t) = regrets(t) / t; 
 %     if t >= T - 9
 %     disp([myReward,expertsRewards(t)])
