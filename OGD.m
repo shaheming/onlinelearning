@@ -1,5 +1,5 @@
 % Set turns
-T = 5000
+T = 500000
 % G is  positive retional number begin with  1
 G = (rand(100,1) + 0.1)' ;
 % your decision domain used in projection
@@ -21,6 +21,7 @@ y = 50.5;
 disp('Begin Loop');
 fprintf('Iterate %d turns',T);
 for i = 0 : T 
+    
     Z = D * rand(99,1);
     x_t = project(y,Xb,Xe);
     y = y + (1 / (i+1))*((Ut_z(x_t,Z,G,eta)));
