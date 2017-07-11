@@ -1,7 +1,8 @@
 % Set turns
-T = 500000
+T = 10000
 % G is  positive retional number begin with  1
-G = (rand(100,1) + 0.1)' ;
+% G = (rand(100,1) + 0.1)' ;
+G =  ones(1,100);
 % your decision domain used in projection
 Xb = 0;
 Xe = 100;
