@@ -1,7 +1,8 @@
 %use doubling tricking to iterate
 M = 17; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
-T = 2^(M-1);
+%T = 2^(M-1);
+T = 50000;
 % G is  positive retional number begin with 1
 N = 100; % N is used to set G and Z
 global G;
@@ -36,13 +37,20 @@ myRewards = zeros(1,T);
 global y;
 y = 0.5;
 
-doubling(M);
+
+%%%%%%%%%%%%%%%%%%
+% main function  %
+%%%%%%%%%%%%%%%%%%
+% doubling(M);
+OGD_Primary(T);
+%%%%%%%end%%%%%%%%
+
 
 function doubling(M)
   
-   experts=zeros(1,M);
-   myChoices=zeros(1,M);
-   regrets=zeros(1,M);
+  experts=zeros(1,M);
+  myChoices=zeros(1,M);
+  regrets=zeros(1,M);
   regrets_div_t=zeros(1,M);
   for m = 1 : M
    [myChoices(m),experts(m), regrets(m)]=iteration(2^(m-1),2^(m));
@@ -60,9 +68,6 @@ function doubling(M)
   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
   plot(regrets_div_t);
 end
-
-% OGD_Primary(T);
-
 
 function out = OGD_Primary(T)
   global regrets_div_t;
@@ -94,7 +99,7 @@ function uout = Ut(x_t,gz,eta,G)
 end
 
 function uout = Ut_new(u,gzs,eta,t,G)
-  uout = -0.5 * (t * ((G(1)* u - eta)^2 + 2 * eta)+sum(-2*(G(1)*u -eta) * gzs(1:t) + gzs(1:t).^2));
+  uout = -0.5 * (t * ((G(1)* u - eta)^2 )+sum(-2*(G(1)*u -eta) * gzs(1:t) + gzs(1:t).^2));
 end
 % the projection funciton
 function x_t = project(y_t,x_bound)
