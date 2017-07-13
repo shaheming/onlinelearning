@@ -20,7 +20,7 @@ D = 1;
 global eta;
 eta = 0;
 global gzs;
-gzs  = zeros(1,T); % <G , Z>
+gzs  = zeros(1,T+1); % <G , Z>
 % output variable
 global regrets;
 regrets = zeros(1,T);
@@ -40,6 +40,8 @@ diff = zeros(1,T);
 global y;
 y = 0.5;
 
+global feedbackHeap;
+feedbackHeap = MinHeap(T);
 %%%%%%%%%%%%%%%%%%
 % main function  %
 %%%%%%%%%%%%%%%%%%
@@ -57,10 +59,11 @@ function doubling(M)
   myChoices=zeros(1,M);
   regrets=zeros(1,M);
   regrets_div_t=zeros(1,M);
-  rng(1);
+%   rng(1);
+rng('shuffle');
   for m = 1 : M
 %    [myChoices(m),experts(m), regrets(m)]=
-    iteration(2^(m-1),2^(m)-1,true);
+    iteration(2^(m-1),2^(m)-1,false);
 %    regrets_div_t(m) = regrets(m)/2^m;
   end
   
@@ -108,6 +111,73 @@ function out = OGD_Primary(T)
   
   
 end
+
+
+function iteration(t_b,t_e,doubling_flag)
+  global G;
+  global Z;
+  global x_bound;
+  global D;
+  global eta;
+  global gzs;
+  global regrets;
+  global regrets_div_t;
+  global experts;
+  global expertsRewards;
+  global myChoices;
+  global myRewards;
+  global y;
+  global feedbackHeap;
+  u = 0;
+  eta1 = 0;
+  feedbackCount = 0;
+  
+  % start at 0
+    Z(1:end) = D * rand(size(Z,1),1);
+    gzs(1) = G(2:end) * Z;
+  %
+  for t = t_b : t_e 
+    % my choice
+    if doubling_flag 
+      eta1 = t_b;
+    else
+      eta1 = t+1;
+    end
+    x_t = project(y,x_bound);
+    y = y + (1 / eta1)*(gradient(x_t,gzs(t),eta,G));
+    
+    myChoices(t) = x_t;
+    % my rewards
+    if t ==1
+      myRewards(t)  = Ut(x_t,gzs(t),eta,G);
+    else
+      myRewards(t)  =myRewards(t-1) + Ut(x_t,gzs(t),eta,G);
+    end
+
+    
+    % caculate expert choice
+    if t == 1
+      u =  (gzs(t) + eta) / G(1);
+    else
+      u = t/(t+1) * experts(t - 1) + 1/(t+1)* 1 /G(1) * (gzs(t) + eta);
+    end
+    
+    u = project(u,x_bound);
+    experts(t) = u;
+    
+    % expert rewards
+    expertsRewards(t) = Ut_expert(experts(t),gzs,eta,t,G);
+    
+    regrets(t) = myRewards(t) - expertsRewards(t);
+    regrets_div_t(t) = regrets(t) / t;
+    %%%
+    
+    Z(1:end) = D * rand(size(Z,1),1);
+    gzs(t+1) = G(2:end) * Z;
+  end
+end
+
+
 % the difference of reward function U
 function uout = gradient(x_t,gz,eta,G)
   uout = - G(1)*(G(1)*x_t - gz - eta);  
@@ -130,59 +200,6 @@ function x_t = project(y_t,x_bound)
     else
       x_t = x_bound(2);
     end
-  end
-end
-
-function iteration(t_b,t_e,doubling_flag)
-  global G;
-  global Z;
-  global x_bound;
-  global D;
-  global eta;
-  global gzs;
-  global regrets;
-  global regrets_div_t;
-  global experts;
-  global expertsRewards;
-  global myChoices;
-  global myRewards;
-  global y;
-  u = 0;
-  eta1 = 0;
- 
-%   slot_end = t_e - t_b + 1;
-
-  for t = t_b : t_e
-    Z(1:end) = D * rand(size(Z,1),1);
-    gzs(t) = G(2:end) * Z;
-    % caculate u
-    if t == 1
-      u =  (gzs(t) + eta) / G(1);
-    else
-      u = t/(t+1) * experts(t - 1) + 1/(t+1)* 1 /G(1) * (gzs(t) + eta);
-    end
-    u = project(u,x_bound);
-    experts(t) = u;
-    x_t = project(y,x_bound); 
-    if doubling_flag 
-      eta1 = t_b + 1;
-    else
-      eta1 = t+1;
-    end
-    
-    y = y + (1 / eta1)*(gradient(x_t,gzs(t),eta,G));
-    
-    myChoices(t) = x_t;
-    if t ==1
-      myRewards(t)  = Ut(x_t,gzs(t),eta,G);
-    else
-      myRewards(t)  =myRewards(t-1) + Ut(x_t,gzs(t),eta,G);
-    end
-
-    expertsRewards(t) = Ut_expert(experts(t),gzs,eta,t,G);
-    regrets(t) = myRewards(t) - expertsRewards(t);
-    regrets_div_t(t) = regrets(t) / t;
-
   end
 end
 
