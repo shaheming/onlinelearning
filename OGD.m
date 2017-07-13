@@ -167,7 +167,7 @@ function iteration(t_b,t_e,doubling_flag)
     experts(t) = u;
     x_t = project(y,x_bound); 
     if doubling_flag 
-      eta1 = t_b + 1;
+      eta1 = t_b ;
     else
       eta1 = t+1;
     end

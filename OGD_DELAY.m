@@ -18,7 +18,7 @@ x_bound = [0,1000];
 global D;
 D = 1;
 global eta;
-eta = 0;
+eta = 1;
 global gzs;
 gzs  = zeros(1,T+1); % <G , Z>
 % output variable
@@ -66,7 +66,7 @@ function doubling(M)
   end
   
    rng(1);
-%   regret_s=ogddoublingtrick(M-1);
+% regret_s=ogddoublingtrick(M-1);
   
   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
@@ -132,16 +132,21 @@ function iteration(t_b,t_e,doubling_flag)
   eta1 = 0;
   feedbackCount = 0;
   
-  % start at 0
+  % start at 0 OMG this is a serious problem !!! because in matlab for i =
+  % i = 1:1 will iterate
+  if t_b == 1
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(1) = G(2:end) * Z;
-  %
+    return
+  end
+
+  disp([t_b,t_e]);
   for t = t_b : t_e 
 %     Z(1:end) = D * rand(size(Z,1),1);
 %     gzs(t) = G(2:end) * Z;
     % my choice
     if doubling_flag 
-      eta1 = t_b;
+      eta1 = t_b; 
     else
       eta1 = t+1;
     end
