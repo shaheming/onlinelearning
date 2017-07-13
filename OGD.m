@@ -78,10 +78,10 @@ function doubling(M)
   figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
   plot(regrets);
     hold on;
-  plot(regret_s);
+  plot(regret_s'+ones(1,size(regret_s,1))*89);
   hold off;
 
-  diff(1:end) = regrets -regret_s';
+  diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
   plot(regrets_div_t);
 end
