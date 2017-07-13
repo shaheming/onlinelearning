@@ -77,7 +77,7 @@ function doubling(M)
   hold off;
   figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
   plot(regrets);
-    hold on;
+    hold on;BinMinHeap
   plot(regret_s'+ones(1,size(regret_s,1))*89);
   hold off;
 
