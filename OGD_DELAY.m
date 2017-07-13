@@ -1,7 +1,7 @@
 function OMG_DELAY()
-  import MinHeap
+import MinHeap
 %use doubling tricking to iterate
-M = 12; % 2 ^ 15 = 32768
+M = 15; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -34,31 +34,38 @@ global myChoices;
 myChoices = zeros(1,T);
 global myRewards;
 myRewards = zeros(1,T);
-global diff;
-diff = zeros(1,T);
 % the initial y
 global y;
-y = 0.5;
+y = 8;
 
 global feedbackHeap;
 feedbackHeap = MinHeap(T);
 %%%%%%%%%%%%%%%%%%
 % main function  %
 %%%%%%%%%%%%%%%%%%
-doubling(M);
-%OGD_Primary(T);
+out=doubling(M);
+regrets = zeros(1,T);
+out1 = OGD_Primary(T);
+
+figure('name','Regrets','NumberTitle','off','Position',[0,500,700,500]);
+plot(out,'DisplayName','doubling');
+hold on;
+plot(out1,'DisplayName','omd');
+hold off;
 %%%%%%%end%%%%%%%%
+
+
 end
 
-function doubling(M)
+function out = doubling(M)
   global regrets_div_t;
   global experts;
   global myChoices;
   global regrets;
   global myRewards;
   global expertsRewards;
-   rng(1);
-%rng('shuffle');
+  rng(1);
+  %rng('shuffle');
   for m = 1 : M
 %    [myChoices(m),experts(m), regrets(m)]=
     iteration(2^(m-1),2^(m)-1,true);
@@ -83,6 +90,7 @@ function doubling(M)
 %   diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
   plot(regrets_div_t);
+  out = regrets;
 end
 
 function out = OGD_Primary(T)
@@ -96,7 +104,6 @@ function out = OGD_Primary(T)
   fprintf('Iterate %d turns',T);
   iteration(1,T,false);
   disp('End Loop');
-  
   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
   hold on;
@@ -107,8 +114,7 @@ function out = OGD_Primary(T)
   plot(regrets);
   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
   plot(regrets_div_t);
-  
-  
+  out = regrets;
 end
 
 
@@ -137,16 +143,16 @@ function iteration(t_b,t_e,doubling_flag)
   if t_b == 1
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(1) = G(2:end) * Z;
-    return
+    x_t = project(y,x_bound);
   end
 
-  disp([t_b,t_e]);
+%   disp([t_b,t_e]);
   for t = t_b : t_e 
-%     Z(1:end) = D * rand(size(Z,1),1);
-%     gzs(t) = G(2:end) * Z;
+    %Z(1:end) = D * rand(size(Z,1),1);
+    % gzs(t) = G(2:end) * Z;
     % my choice
     if doubling_flag 
-      eta1 = t_b; 
+      eta1 = t_b+1; 
     else
       eta1 = t+1;
     end
