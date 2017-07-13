@@ -1,7 +1,7 @@
 function OMG_DELAY()
 import MinHeap
 %use doubling tricking to iterate
-M = 4; % 2 ^ 15 = 32768
+M = 10; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -146,10 +146,9 @@ function iteration(t_b,t_e,doubling_flag)
   u = 10;
   x_t = 0;
   gz = 0;
-  type = 'square';
+  type = 'linear';
   % bound
   % liner
-  % log
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -312,19 +311,13 @@ end
 
 function [feedBackTime,gz] = logDelay(t,D,G,Z)
   Z(1:end) = D * rand(size(Z,1),1);
-  if t < 2
-    t = randi([1,size(Z,1)]);
-  end
   feedBackTime = t + ceil(log2(t));
   gz =  G(2:end) * Z;
 end
 
 function [feedBackTime,gz] = squareDelay(t,D,G,Z)
   Z(1:end) = D * rand(size(Z,1),1);
-  if t == 0
-    t = randi([1,size(Z,1)]);
-  end
-  feedBackTime = t^2 + t;
+  feedBackTime = t^T;
   gz =  G(2:end) * Z;
 end
 

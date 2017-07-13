@@ -1,4 +1,4 @@
-function OMG_DELAY()
+function out = OMG()
 %use doubling tricking to iterate
 M = 15; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
@@ -42,15 +42,16 @@ feedbackHeap = MinHeap(T);
 %%%%%%%%%%%%%%%%%%
 % main function  %
 %%%%%%%%%%%%%%%%%%
-out=doubling(M);
-regrets = zeros(1,T);
-out1 = OGD_Primary(T);
-
-figure('name','Regrets','NumberTitle','off','Position',[0,500,700,500]);
-plot(out,'DisplayName','doubling');
-hold on;
-plot(out1,'DisplayName','omd');
-hold off;
+% out=doubling(M);
+% regrets = zeros(1,T);
+  out = OGD_Primary(T);
+% 
+%  figure('name','Regrets','NumberTitle','off','Position',[100,0,700,500]);
+%  plot(out,'DisplayName','doubling');
+%  hold on;
+%  plot(out_1,'DisplayName','omd');
+%  legend('doubling','omd');
+%  hold off;
 %%%%%%%end%%%%%%%%
 
 
@@ -63,6 +64,18 @@ function out = doubling(M)
   global regrets;
   global myRewards;
   global expertsRewards;
+  global gzs;
+  
+  T = 2^(M)-1; % avoid the last value to 0
+  gzs  = zeros(1,T+1); % <G , Z>
+  %output variable
+  regrets = zeros(1,T);
+  regrets_div_t = zeros(1,T);
+  experts = zeros(1,T);
+  expertsRewards = zeros(1,T);
+  myChoices = zeros(1,T);
+  myRewards = zeros(1,T);
+  
   rng(1);
   %rng('shuffle');
   for m = 1 : M
@@ -97,7 +110,17 @@ function out = OGD_Primary(T)
   global experts;
   global myChoices;
   global regrets;
-  
+  global myRewards;
+  global expertsRewards;
+  global gzs;
+  gzs  = zeros(1,T+1); % <G , Z>
+  %output variable
+  regrets = zeros(1,T);
+  regrets_div_t = zeros(1,T);
+  experts = zeros(1,T);
+  expertsRewards = zeros(1,T);
+  myChoices = zeros(1,T);
+  myRewards = zeros(1,T);
    
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);

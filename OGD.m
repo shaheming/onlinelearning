@@ -1,6 +1,6 @@
 function out = OMG()
 %use doubling tricking to iterate
-M = 15; % 2 ^ 15 = 32768
+M = 5; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -38,7 +38,7 @@ global y;
 y = 8;
 
 global feedbackHeap;
-feedbackHeap = MinHeap(T);
+feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
 %%%%%%%%%%%%%%%%%%
 % main function  %
 %%%%%%%%%%%%%%%%%%

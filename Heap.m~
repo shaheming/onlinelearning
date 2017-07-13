@@ -28,7 +28,7 @@ classdef Heap < handle
                 Heap.ZeroCapacityError();
             end
             this.n = n;
-            this.x = nan(n,size(x0,2));
+            this.x = nan(n,zeros(size(x0)));
             
             if ((nargin == 2) && ~isempty(x0))
                 % Insert given elements
