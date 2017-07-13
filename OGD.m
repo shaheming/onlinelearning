@@ -77,11 +77,12 @@ function doubling(M)
   hold off;
   figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
   plot(regrets);
-    hold on;BinMinHeap
-  plot(regret_s'+ones(1,size(regret_s,1))*89);
+  hold on;
+%   plot(regret_s'+ones(1,size(regret_s,1))*89);
+  plot(regret_s);
   hold off;
 
-  diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
+%   diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
   plot(regrets_div_t);
 end
@@ -164,9 +165,7 @@ function iteration(t_b,t_e,doubling_flag)
     end
     u = project(u,x_bound);
     experts(t) = u;
-    x_t = project(y,x_bound);
-    
-    
+    x_t = project(y,x_bound); 
     if doubling_flag 
       eta1 = t_b + 1;
     else
@@ -235,7 +234,8 @@ for m=[0:period]
         if t==1
             u(t)=s(t)+eta;
         else
-            u(t)=u(t-1)*t/(t+1)+(s(t)+eta)/(t+1); 
+%           u(t)=u(t-1)*t/(t+1)+(s(t)+eta)/(t+1); 
+            u(t)=u(t-1)*(t-1)/t+(s(t)+eta)/t; 
         end
         for j=1:t
             expert_reward(t)=expert_reward(t)-0.5*(u(t)-s(j)-eta)^2;
