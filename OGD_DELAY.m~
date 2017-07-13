@@ -117,10 +117,10 @@ function uout = Ut(x_t,gz,eta,G)
   uout = -0.5 * (G(1).*x_t - gz - eta).^2;
 end
 
-function uout = Ut_expert(u,gzs,eta,t,G)
+function uout = Ut_new(u,gzs,eta,t,G)
   uout = -0.5 * (t * ((G(1)* u - eta)^2 )+sum(-2*(G(1)*u -eta) * gzs(1:t) + gzs(1:t).^2));
 end
-%the projection funciton
+% the projection funciton
 function x_t = project(y_t,x_bound)
   if x_bound(1) <= y_t && y_t <= x_bound(2)
     x_t = y_t;
@@ -149,7 +149,6 @@ function iteration(t_b,t_e,doubling_flag)
   global y;
   u = 0;
   eta1 = 0;
- 
 %   slot_end = t_e - t_b + 1;
 
   for t = t_b : t_e
@@ -173,23 +172,14 @@ function iteration(t_b,t_e,doubling_flag)
     y = y + (1 / eta1)*(gradient(x_t,gzs(t),eta,G));
     
     myChoices(t) = x_t;
-    if t ==1
-      myRewards(t)  = Ut(x_t,gzs(t),eta,G);
-    else
-      myRewards(t)  =myRewards(t-1) + Ut(x_t,gzs(t),eta,G);
-    end
-
-    expertsRewards(t) = Ut_expert(experts(t),gzs,eta,t,G);
-    regrets(t) = myRewards(t) - expertsRewards(t);
+    myRewards(t)  = Ut(x_t,gzs(t),eta,G);
+    expertsRewards(t) = Ut_new(experts(t),gzs,eta,t,G);
+    regrets(t) = sum(myRewards(1:t)) - expertsRewards(t);
     regrets_div_t(t) = regrets(t) / t;
 
   end
 end
 
-
-%%%%%%%
-%     %
-%%%%%%%
 
 function [feedbackTime,gz] = boundDelay(t,B)
   global G;
@@ -212,13 +202,5 @@ function [feedbackTime,gz] = logDelay(t)
   global Z;
   Z(1:end) = D * rand(size(Z,1),1);
   feedbackTime = t + ceil(log2(t));
-  gz =  G(2:end) * Z;
-end
-
-function [feedbackTime,gz] = squareDelay(t)
-  global G;
-  global Z;
-  Z(1:end) = D * rand(size(Z,1),1);
-  feedbackTime = t^T;
   gz =  G(2:end) * Z;
 end
