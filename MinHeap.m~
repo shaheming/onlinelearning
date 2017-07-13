@@ -65,7 +65,7 @@ classdef MinHeap < Heap
             %--------------------------------------------------------------
             
             this.SetLength(this.k + 1);
-            this.x(this.k,:) = [inf,inf];
+            this.x(this.k) = [inf,inf];
             this.DecreaseKey(this.k,key);
         end
         
@@ -89,8 +89,8 @@ classdef MinHeap < Heap
                 nk = nk - 1;
                 this.MinHeapify(1,nk);
             end
-            this.x(1:this.k) = flipud(this.x(1:this.k,:));
-            sx = this.x(1:this.k,:);
+            this.x(1:this.k) = flipud(this.x(1:this.k));
+            sx = this.x(1:this.k);
         end
         
         %
@@ -108,7 +108,7 @@ classdef MinHeap < Heap
             if (this.IsEmpty() == true)
                 min = [];
             else
-                min = this.x(1,:);
+                min = this.x(1);
             end
         end
         
@@ -126,8 +126,9 @@ classdef MinHeap < Heap
             %--------------------------------------------------------------
             
             this.SetLength(this.k - 1);
+            this.x
             min = this.x(1,:);
-            this.x(1,:) = this.x(this.k + 1,:);
+            this.x(1) = this.x(this.k + 1);
             this.MinHeapify(1);
         end
     end
@@ -179,7 +180,7 @@ classdef MinHeap < Heap
             else
                 smallest = i;
             end
-            if ((rr <= size) && (this.x(rr,1) < this.x(smallest,1)))
+            if ((rr <= size) && (this.x(rr,1) < this.x(smallest,)))
                 smallest = rr;
             end
             if (smallest ~= i)

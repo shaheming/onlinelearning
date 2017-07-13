@@ -32,12 +32,12 @@ classdef Heap < handle
             
             if ((nargin == 2) && ~isempty(x0))
                 % Insert given elements
-                k0 = numel(x0);
+                k0 = size(x0,1);
                 if (k0 > n)
                     % Heap overflow
                     Heap.OverflowError();
                 else
-                    this.x(1:k0) = x0(:);
+                    this.x = x0;
                     this.SetLength(k0);
                 end
             else
