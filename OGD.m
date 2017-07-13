@@ -1,5 +1,5 @@
 %use doubling tricking to iterate
-M = 14; % 2 ^ 15 = 32768
+M = 12; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M) - 1;
 % T = 50000;

@@ -59,10 +59,11 @@ function doubling(M)
   myChoices=zeros(1,M);
   regrets=zeros(1,M);
   regrets_div_t=zeros(1,M);
-  rng(1);
+   rng(1);
+%rng('shuffle');
   for m = 1 : M
 %    [myChoices(m),experts(m), regrets(m)]=
-    iteration(2^(m-1),2^(m)-1,true);
+    iteration(2^(m-1),2^(m)-1,false);
 %    regrets_div_t(m) = regrets(m)/2^m;
   end
   
@@ -132,22 +133,21 @@ function iteration(t_b,t_e,doubling_flag)
   feedbackCount = 0;
   
   % start at 0
-  
-  %
-  for t = t_b : t_e
     Z(1:end) = D * rand(size(Z,1),1);
-    gzs(t) = G(2:end) * Z;
-    
-    
+    gzs(1) = G(2:end) * Z;
+  %
+  for t = t_b : t_e 
+%     Z(1:end) = D * rand(size(Z,1),1);
+%     gzs(t) = G(2:end) * Z;
     % my choice
     if doubling_flag 
-      eta1 = t_b + 1;
+      eta1 = t_b;
     else
       eta1 = t+1;
     end
-  
+    x_t = project(y,x_bound);
     y = y + (1 / eta1)*(gradient(x_t,gzs(t),eta,G));
-    x_t = project(y,x_bound); 
+    
     myChoices(t) = x_t;
     % my rewards
     if t ==1
@@ -173,6 +173,9 @@ function iteration(t_b,t_e,doubling_flag)
     regrets(t) = myRewards(t) - expertsRewards(t);
     regrets_div_t(t) = regrets(t) / t;
     %%%
+    
+    Z(1:end) = D * rand(size(Z,1),1);
+    gzs(t+1) = G(2:end) * Z;
   end
 end
 

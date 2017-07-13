@@ -1,9 +1,9 @@
 function OMG_DELAY()
   import MinHeap
 %use doubling tricking to iterate
-M = 14; % 2 ^ 15 = 32768
+M = 12; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
-T = 2^(M) - 1;
+T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
 % G is  positive retional number begin with 1
 N = 100; % N is used to set G and Z
@@ -55,15 +55,13 @@ function doubling(M)
   global experts;
   global myChoices;
   global regrets;
-  experts=zeros(1,M);
-  myChoices=zeros(1,M);
-  regrets=zeros(1,M);
-  regrets_div_t=zeros(1,M);
-%   rng(1);
-rng('shuffle');
+  global myRewards;
+  global expertsRewards;
+   rng(1);
+%rng('shuffle');
   for m = 1 : M
 %    [myChoices(m),experts(m), regrets(m)]=
-    iteration(2^(m-1),2^(m)-1,false);
+    iteration(2^(m-1),2^(m)-1,true);
 %    regrets_div_t(m) = regrets(m)/2^m;
   end
   
@@ -93,6 +91,7 @@ function out = OGD_Primary(T)
   global myChoices;
   global regrets;
   
+   
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
   iteration(1,T,false);
@@ -128,6 +127,7 @@ function iteration(t_b,t_e,doubling_flag)
   global myRewards;
   global y;
   global feedbackHeap;
+  
   u = 0;
   eta1 = 0;
   feedbackCount = 0;
@@ -137,6 +137,8 @@ function iteration(t_b,t_e,doubling_flag)
     gzs(1) = G(2:end) * Z;
   %
   for t = t_b : t_e 
+%     Z(1:end) = D * rand(size(Z,1),1);
+%     gzs(t) = G(2:end) * Z;
     % my choice
     if doubling_flag 
       eta1 = t_b;
@@ -148,18 +150,18 @@ function iteration(t_b,t_e,doubling_flag)
     
     myChoices(t) = x_t;
     % my rewards
-    if t ==1
-      myRewards(t)  = Ut(x_t,gzs(t),eta,G);
+    if t ~=1
+      myRewards(t)  = myRewards(t-1) + Ut(x_t,gzs(t),eta,G);
     else
-      myRewards(t)  =myRewards(t-1) + Ut(x_t,gzs(t),eta,G);
+      myRewards(t)  = Ut(x_t,gzs(t),eta,G);
     end
 
     
     % caculate expert choice
-    if t == 1
-      u =  (gzs(t) + eta) / G(1);
-    else
+    if t ~= 1
       u = t/(t+1) * experts(t - 1) + 1/(t+1)* 1 /G(1) * (gzs(t) + eta);
+    else
+      u =  (gzs(t) + eta) / G(1);
     end
     
     u = project(u,x_bound);
@@ -175,6 +177,8 @@ function iteration(t_b,t_e,doubling_flag)
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(t+1) = G(2:end) * Z;
   end
+  
+  
 end
 
 
