@@ -162,11 +162,9 @@ function iteration(t_b,t_e,doubling_flag)
   global myChoices;
   global myRewards;
   global y;
-  global feedbackHeap;
-  
-  u = 0;
-  eta1 = 0;
-  feedbackCount = 0;
+
+
+
   
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
@@ -177,18 +175,22 @@ function iteration(t_b,t_e,doubling_flag)
     % This simulation is a little bit different from the normal algorithm
     % in the paper. 
     % In my code we get x at first, then we gerate y
-  
+    
+    % get x1
     myChoices(1) = project(y,x_bound);
-%     myChoices(1) = x_t;
-    % t = 1 feedback
+
+    % get feedback
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(1) = G(2:end) * Z;
+    
+    % find the best expert's choice
     u =  (gzs(1) + eta) / G(1);
     u = project(u,x_bound);
     experts(1) = u;
-    expertsRewards(1) = Ut_expert(experts(1),gzs,eta,1,G);
+    
+    expertsRewards(1) = expertReward(experts(1),gzs,eta,1,G);
 %   expertsRewards(1) = -0.5*(u-gzs(1)-eta)^2;
-    myRewards(1)  = Ut(myChoices(1),gzs(1),eta,G);
+    myRewards(1)  = userLoss(myChoices(1),gzs(1),eta,G);
     regrets(1) = myRewards(1) - expertsRewards(1);
     regrets_div_t(1) = regrets(1);
     
@@ -221,7 +223,7 @@ function iteration(t_b,t_e,doubling_flag)
     y = y + (1 / eta1)*(gradient(myChoices(t) ,gzs(t),eta,G));
     
     % my rewards
-    myRewards(t)  = myRewards(t-1) + Ut(myChoices(t),gzs(t),eta,G);
+    myRewards(t)  = myRewards(t-1) + userLoss(myChoices(t),gzs(t),eta,G);
    
     % caculate expert choice
     u = (t-1)/ t* experts(t - 1) + 1/t * 1 /G(1) * (gzs(t) + eta);
@@ -231,7 +233,7 @@ function iteration(t_b,t_e,doubling_flag)
     experts(t) = u;
     %expert's rewards
     
-    expertsRewards(t) = Ut_expert(experts(t),gzs,eta,t,G);
+    expertsRewards(t) = expertReward(experts(t),gzs,eta,t,G);
     
     % regret
     regrets(t) = myRewards(t) - expertsRewards(t);
@@ -250,11 +252,11 @@ function uout = gradient(x_t,gz,eta,G)
   uout = - G(1)*(G(1)*x_t - gz - eta);  
 end
 % the reward function U
-function uout = Ut(x_t,gz,eta,G)
+function uout = userLoss(x_t,gz,eta,G)
   uout = -0.5 * (G(1).*x_t - gz - eta).^2;
 end
 
-function uout = Ut_expert(u,gzs,eta,t,G)
+function uout = expertReward(u,gzs,eta,t,G)
   uout = -0.5 * (t * ((G(1)* u - eta)^2 )+sum(-2*(G(1)*u -eta) * gzs(1:t) + gzs(1:t).^2));
 end
 %the projection funciton
@@ -271,10 +273,10 @@ function x_t = project(y_t,x_bound)
 end
 
 
-function regret=ogdfix(y0,x_bound)
+function regret=ogdfix(y1,x_bound)
 %x belongs to [0,1000]
-global myRewards;
-global myChoices;
+% global myRewards;
+% global myChoices;
 %y0=8;
   T=2^11-1;
   eta=1;
@@ -293,17 +295,17 @@ global myChoices;
   z=zeros(n-1,1);
  
   x=zeros(T,1);
-
-  x0=project(y0,x_bound);
-  y(1)=y0;
   
-  x(1) = x0;
+  % init 
+  % we should say given y1,insteading given y0
+  y(1) = y1;
+  x(1) = project(y1,x_bound);
   % feedback
   z(:)=rand(n-1,1);
   s(1)=sum(z);
   user(1) = -0.5*(x(1)-s(1)-eta)^2; 
   % feedback function
-  y(2)= y(1) - 1/2 * (x0-sum(z)-eta);
+  y(2)= y(1) - 1/2 * (x(1)-sum(z)-eta);
   u(1)=s(1)+eta;
   expert_reward(1) = -0.5*(u(1)-s(1)-eta)^2;
   regret(1)=user(1)-expert_reward(1);
