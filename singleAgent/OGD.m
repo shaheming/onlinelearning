@@ -168,38 +168,14 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
     % This simulation is a little bit different from the normal algorithm
     % in the paper. 
     % In my code we get x at first, then we gerate y
-    
     % get x0
     x_t = project(y,x_bound);
     % x0 feedback
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(1) = G(2:end) * Z;    
     y = y + (gradient(x_t,gzs(1),eta,G));
-    
-    % get x1
-    myChoices(1) = project(y,x_bound);
-    % get feedback
-    Z(1:end) = D * rand(size(Z,1),1);
-    gzs(1) = G(2:end) * Z;
-    
-    % find the best expert's choice
-    u =  (gzs(1) + eta) / G(1);
-    u = project(u,x_bound);
-    experts(1) = u;
-    
-    expertsRewards(1) = expertReward(experts(1),gzs,eta,1,G);
-%   expertsRewards(1) = -0.5*(u-gzs(1)-eta)^2;
-    myRewards(1)  = userLoss(myChoices(1),gzs(1),eta,G);
-    regrets(1) = myRewards(1) - expertsRewards(1);
-    regrets_div_t(1) = regrets(1);
-    
-    % get y + 1
-    y = y + (1 / 2)*(gradient(myChoices(1),gzs(1),eta,G));
-    t_b = t_b + 1;
   end
-
    
- %disp([t_b,t_e]);
   for t = t_b : t_e
     %Z(1:end) = D * rand(size(Z,1),1);
     % gzs(t) = G(2:end) * Z;
@@ -222,10 +198,17 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
     y = y + (1 / eta1)*(gradient(myChoices(t) ,gzs(t),eta,G));
     
     % my rewards
-    myRewards(t)  = myRewards(t-1) + userLoss(myChoices(t),gzs(t),eta,G);
-   
+    if t == 1
+       myRewards(1)  = userLoss(myChoices(1),gzs(1),eta,G);
+    else
+       myRewards(t)  = myRewards(t-1) + userLoss(myChoices(t),gzs(t),eta,G);
+    end
     % caculate expert choice
-    u = (t-1)/ t* experts(t - 1) + 1/t * 1 /G(1) * (gzs(t) + eta);
+    if t == 1
+       u =  (gzs(1) + eta) / G(1);
+    else
+       u = (t-1)/ t* experts(t - 1) + 1/t * 1 /G(1) * (gzs(t) + eta);
+    end
     u = project(u,x_bound);
     
     % record expert's choice
