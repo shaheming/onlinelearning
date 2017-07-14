@@ -1,7 +1,7 @@
 function OMG_DELAY(type)
 import MinHeap
 %use doubling tricking to iterate
-M = 18; % 2 ^ 15 = 32768
+M = 11; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -153,25 +153,25 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   if t_b == 1
    
 %   gzs(1)=G(2:end) * Z;
-   % t = 0
+   % t = 0 x0
     z_t = project(y1,x_bound);
-    % y + 1
+    % y 1
     Z(1:end) = D * rand(size(Z,1),1);
     gz =G(2:end) * Z;
     y = y + (gradients(z_t,gz,eta,G));  
-    gzs(1)=G(2:end) * Z;
+%    gzs(1)=G(2:end) * Z;
+   
+   
     
-    Z(1:end) = D * rand(size(Z,1),1);
-    gDelayedFeedBack(B,D,G,Z,1, z_t,eta,feedbackHeap,type);
+%     t_b = t_b + 1;
+  
   end
 
   % from 1
   for t = t_b : t_e 
-        % generate delayed feedback
-
-   
-    % generate feedback delay
-    %   gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type);
+     % generate delayed feedback
+    %  generate feedback delay
+    %  gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type);
     
     if doubling_flag 
       eta1 = t_b; 
@@ -180,16 +180,18 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
     end
     
     if t == 1
+      myChoices(1) = project(y,x_bound);
       myRewards(t) = 0;
       expertsRewards(t)=0;
       experts(t) = 0;
+      
     else
-      myChoices(t) = myChoices(t-1);
+      myChoices(t) = project(y,x_bound); 
       myRewards(t) = myRewards(t-1) ;
       expertsRewards(t)=expertsRewards(t-1); 
       experts(t) = experts(t-1);
     end
-      
+    gDelayedFeedBack(B,D,G,Z,t, myChoices(t),eta,feedbackHeap,type);  
     
     if feedbackHeap.Count() > 0 
       % check delay
@@ -215,7 +217,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
              
              % count feedback loss function
              gzs(feedBackCount) = gz;
-             myChoices(t) = project(y,x_bound); 
+%              myChoices(t) = project(y,x_bound); 
              % update y + 1
              y = y + (1 / eta1) * gradient;
              % x_s update rewards;
@@ -239,8 +241,8 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         % note the t = feedbackcount
         expertsRewards(t) = Ut_expert(experts(t),gzs,eta,feedBackCount,G);
         
-        Z(1:end) = D * rand(size(Z,1),1);
-        gDelayedFeedBack(B,D,G,Z,t+1, myChoices(t),eta,feedbackHeap,type);
+       
+%         gDelayedFeedBack(B,D,G,Z,t, myChoices(t),eta,feedbackHeap,type);
       end
     end
      
@@ -259,7 +261,7 @@ end
 
 % the difference of reward function U
 function uout = gradients(x_t,gzs,eta,G)
-  uout = sum(- G(1)*((G(1) * x_t- eta) * ones(size(gzs , 1)) - gzs ));  
+  uout = sum( -G(1)*((G(1) * x_t- eta) * ones(size(gzs , 1)) - gzs ));  
 end
 % the reward function U
 function uout = Ut(x_t,gzs,eta,G)
