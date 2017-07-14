@@ -1,7 +1,7 @@
-function OMG_DELAY()
+function OMG_DELAY(type)
 import MinHeap
 %use doubling tricking to iterate
-M = 4; % 2 ^ 15 = 32768
+M = 14; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -17,9 +17,7 @@ x_bound = [0,1000];
 % D and eta are used in reward function U
 global D;
 D = 1;
-% Delay bound
-global B;
-B = 5;
+
 global eta;
 eta = 1;
 global gzs;
@@ -54,7 +52,22 @@ feedBackCount = 0;
 %%%%%%%%%%%%%%%%%%
 % out=doubling(M);
 % regrets = zeros(1,T);
- OGD_Primary(T);
+
+
+% Delay bound
+% if the B == 1 there is no bound
+global B;
+B = 5;
+% type = 'square';  
+% bound
+% linear
+% log
+% square
+ OGD_Primary(T,type);
+%types = {'square','bound','linear','log','square'};
+% for i = types
+% OGD_DELAY(char(i))
+% end
 
 % figure('name','Regrets','NumberTitle','off','Position',[0,500,700,500]);
 % plot(out,'DisplayName','doubling');
@@ -66,101 +79,82 @@ feedBackCount = 0;
 
 end
 
-function out = doubling(M)
-  global regrets_div_t;
-  global experts;
-  global myChoices;
-  global regrets;
 
-  %rng('shuffle');
-   rng(1);
-  for m = 1 : M
-%    [myChoices(m),experts(m), regrets(m)]=
-    iteration(2^(m-1),2^(m)-1,true);
-%    regrets_div_t(m) = regrets(m)/2^m;
-  end
-  
-% regret_s=ogddoublingtrick(M-1);
-  
-  figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
-  plot(experts,'DisplayName','experts');
-  hold on;
-  plot(myChoices,'DisplayName','mychoice');
-  legend('experts','mychoice');
-  hold off;
-  figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
-  hold on;
-% plot(regret_s'+ones(1,size(regret_s,1))*89);
-  plot(regrets);
-  hold off;
 
-% diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
-  figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
-  plot(regrets_div_t);
-  out = regrets;
-end
-
-function out = OGD_Primary(T)
+function out = OGD_Primary(T,type)
   global regrets_div_t;
   global experts;
   global myChoices;
   global regrets;
   
-   
+
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
-  iteration(1,T,false);
+  
+  [myRewards,expertsRewards]= iteration(1,T,false,type);
+  
   disp('End Loop');
-  figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
+  imgXCompare = figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
   hold on;
   plot(myChoices,'DisplayName','mychoice');
   legend('experts','mychoice');
+  title('My x and expert '' u','FontSize',20,'FontWeight','normal');
   hold off;
-  figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
+  
+  saveas(imgXCompare,strcat('img/',type,'_xcompare'),'png');
+  
+  imgRegret = figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
   plot(regrets);
-  figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
-  plot(regrets_div_t);
+  title('Regret','FontSize',20,'FontWeight','normal');
+  saveas(imgRegret,strcat('img/',type,'_regret'),'png');
+  
+%   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
+%   plot(regrets_div_t);
+
+  imgRewardCompare = figure('name','ExpertsRewards and myRewards','NumberTitle','off','Position',[100,500,700,500]);
+
+  plot(myRewards,'DisplayName','myRewards');
+  hold on;
+  title('Rewards Compare','FontSize',20,'FontWeight','normal');
+  plot(expertsRewards,'DisplayName','expertsRewards');
+  legend('myRewards','expertsRewards');
+  hold off;
+  saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
+  
   out = regrets;
+  close all;
 end
 
 
-function iteration(t_b,t_e,doubling_flag)
+function[outMyRewards,outExpertsRewards]=iteration(t_b,t_e,doubling_flag,type)
   global G;
-  global x_bound;
+  global D;
+  global Z;
+  global B;
+  global y;
   global eta;
-  global gzs;
+  global gzs;  
+  global x_bound;
   global regrets;
   global regrets_div_t;
   global experts;
-  global expertsRewards;
   global myChoices;
   global myRewards;
-  global y;
+  global expertsRewards;
   global feedbackHeap;
-  global B;
   global delaytimes;
   global feedBackCount;
-  global D;
-  global Z;
+
   u = 10;
   x_t = 0;
   gz = 0;
-  type = 'square';
-  % bound
-  % liner
-  % log
+
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
-    %Z(1:end) = D * rand(size(Z,1),1);
-    %gzs(1) = G(2:end) * Z;
     x_t = project(y,x_bound);
-%     [feedBackTime,gz] = boundDelay(0,B,D);
-%     gradient = gradients(x_t,gz,eta,G);
-%     reward = Ut(x_t,gz,eta,G);
-%     feedbackHeap.InsertKey([feedBackTime,gz,gradient,reward]);
-    gDelayedFeedBack(B,D,G,Z,0,x_t,gz,eta,feedbackHeap,type);
+    gDelayedFeedBack(B,D,G,Z,0,x_t,eta,feedbackHeap,type);
   end
 
   for t = t_b : t_e 
@@ -199,8 +193,7 @@ function iteration(t_b,t_e,doubling_flag)
              gzs(feedBackCount) = gz;
              
            end
-             global delaytimes;
-             delaytimes(t) = tmp;
+           delaytimes(t) = tmp;
         end
         
         x_t = project(y,x_bound);
@@ -242,23 +235,14 @@ function iteration(t_b,t_e,doubling_flag)
     
     regrets(t) = myRewards(t) - expertsRewards(t);
     regrets_div_t(t) = regrets(t) / t;
-    %%%
-    %Z(1:end) = D * rand(size(Z,1),1);
-    %gzs(t+1) = G(2:end) * Z;
-   gDelayedFeedBack(B,D,G,Z,t,x_t,gz,eta,feedbackHeap,type);
-%     [feedBackTime,gz] = boundDelay(t,B,D);
-%      gradient = gradients(x_t,gz,eta,G);
-%      reward = Ut(x_t,gz,eta,G);
-%     feedbackHeap.InsertKey([feedBackTime,gz,gradient,reward]);
+
+   gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type);
+
   end
-  
-delayCompare=[myRewards',expertsRewards',delaytimes];
-figure('name','ExpertsRewards and myRewards','NumberTitle','off','Position',[100,500,700,500]);
-plot(myRewards,'DisplayName','myRewards');
-hold on;
-plot(expertsRewards,'DisplayName','expertsRewards');
-legend('myRewards','expertsRewards');
-hold off;
+  outMyRewards = myRewards;
+  outExpertsRewards = expertsRewards;
+%   delayCompare=[myRewards',expertsRewards',delaytimes];
+
 end
 
 
@@ -288,17 +272,14 @@ function x_t = project(y_t,x_bound)
 end
 
 
-%%%%%%%
-%     %
-%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%
+%  delay function   %
+%%%%%%%%%%%%%%%%%%%%%
 
 function [feedBackTime,gz] = boundDelay(t,B,D,G,Z)  
   Z(1:end) = D * rand(size(Z,1),1);
-  %feedbackTime = t+ 1;
-  %round(t + rand(1) * B);
   feedBackTime = randi([1,B])+t;
   gz =  G(2:end) * Z;
-
 end
 
 function [feedBackTime,gz] = linearDelay(t,D,slop,G,Z)
@@ -328,8 +309,9 @@ function [feedBackTime,gz] = squareDelay(t,D,G,Z)
   gz =  G(2:end) * Z;
 end
 
-function gDelayedFeedBack(B,D,G,Z,t,x_t,gz,eta,feedbackHeap,type)
-
+function gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type)
+ feedBackTime = 0;
+ gz =0;
   switch lower(type)
     case 'bound'
       [feedBackTime,gz] = boundDelay(t,B,D,G,Z);  
@@ -339,9 +321,45 @@ function gDelayedFeedBack(B,D,G,Z,t,x_t,gz,eta,feedbackHeap,type)
       [feedBackTime,gz] = logDelay(t,D,G,Z);
     case 'square'
       [feedBackTime,gz] = squareDelay(t,D,G,Z);
+    otherwise
+       error('Delay type err');
   end
    
     gradient = gradients(x_t,gz,eta,G);
     reward = Ut(x_t,gz,eta,G);
     feedbackHeap.InsertKey([feedBackTime,gz,gradient,reward]);
+end
+
+function out = doubling(M)
+  global regrets_div_t;
+  global experts;
+  global myChoices;
+  global regrets;
+
+  %rng('shuffle');
+   rng(1);
+  for m = 1 : M
+%    [myChoices(m),experts(m), regrets(m)]=
+    iteration(2^(m-1),2^(m)-1,true);
+%    regrets_div_t(m) = regrets(m)/2^m;
+  end
+  
+% regret_s=ogddoublingtrick(M-1);
+  
+  figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
+  plot(experts,'DisplayName','experts');
+  hold on;
+  plot(myChoices,'DisplayName','mychoice');
+  legend('experts','mychoice');
+  hold off;
+  figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
+  hold on;
+% plot(regret_s'+ones(1,size(regret_s,1))*89);
+  plot(regrets);
+  hold off;
+
+% diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
+  figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
+  plot(regrets_div_t);
+  out = regrets;
 end
