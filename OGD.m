@@ -1,6 +1,6 @@
 function out = OMG()
 %use doubling tricking to iterate
-M = 5; % 2 ^ 15 = 32768
+M = 11; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -44,8 +44,17 @@ feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
 %%%%%%%%%%%%%%%%%%
 % out=doubling(M);
 % regrets = zeros(1,T);
-  out = OGD_Primary(T);
-% 
+rng(1);
+  out_s = OGD_Primary(T);
+  rng(1);
+  regret_s=ogdfix(8);
+  rng(1);
+  figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
+  plot(out_s,'DisplayName','out_s');
+  hold on;
+  plot(regret_s,'DisplayName','regret_s');
+  legend('out_s','regret_s');
+  hold off;
 %  figure('name','Regrets','NumberTitle','off','Position',[100,0,700,500]);
 %  plot(out,'DisplayName','doubling');
 %  hold on;
@@ -85,7 +94,7 @@ function out = doubling(M)
   end
   
    rng(1);
-% regret_s=ogddoublingtrick(M-1);
+   
   
   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
@@ -95,7 +104,8 @@ function out = doubling(M)
   hold off;
   figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
   hold on;
-%   plot(regret_s'+ones(1,size(regret_s,1))*89);
+%    plot(regret_s'+ones(1,size(regret_s,1))*89);
+   plot(regret_s);
   plot(regrets);
   hold off;
 
@@ -239,3 +249,66 @@ function x_t = project(y_t,x_bound)
     end
   end
 end
+
+
+function regret=ogdfix(y0)
+%x belongs to [0,1000]
+%y0=8;
+T=2^11-1;
+eta=1;
+n=100;
+s=zeros(T+1,1);
+
+y=zeros(T,1);
+% this y has some problem!!!
+% I fix it
+%calculate y(1)
+z=zeros(n-1,1);
+
+x0=project(y0,[0,1000]);
+
+% y(1)=y0-(x0-sum0-eta);
+y(1) = y0;
+% regret
+x=zeros(T,1);
+z=rand(n-1,1);
+s(1)=sum(z);
+u=zeros(T,1);
+user=zeros(T,1);
+expert_reward=zeros(T,1);
+users_reward=zeros(T,1);
+regret=zeros(T,1);
+for t=1:T
+    %user's choice
+%     for i=2:n
+%         z(i)=rand(1);
+%     end
+    z=rand(n-1,1);
+    x(t)=project(y(t),[0,1000]);
+    s(t+1)=sum(z);
+    y(t+1)=y(t)-(x(t)-s(t)-eta)/(t+1);
+    %user performance
+    users_reward(t)=-0.5*(x(t)-s(t)-eta)^2; 
+    if t==1
+        user(t)=users_reward(t);
+    else
+        user(t)=user(t-1)+users_reward(t);
+    %best expert performance
+    end
+    if t==1
+        u(t)=s(t)+eta;
+    else
+        u(t)=u(t-1)*(t-1)/t+(s(t)+eta)/t; 
+    end
+    for j=1:t
+        expert_reward(t)=expert_reward(t)-0.5*(u(t)-s(j)-eta)^2;
+    end
+    %calculate regret
+    regret(t)=user(t)-expert_reward(t);
+    end
+end
+
+
+
+
+
