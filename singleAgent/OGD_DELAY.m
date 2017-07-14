@@ -1,7 +1,7 @@
 function OMG_DELAY(type)
 import MinHeap
 %use doubling tricking to iterate
-M = 11; % 2 ^ 15 = 32768
+M = 18; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -36,8 +36,8 @@ myChoices = zeros(1,T);
 global myRewards;
 myRewards = zeros(1,T);
 % the initial y
-global y;
-y = 8;
+
+
 
 global delaytimes;
 delaytimes = zeros(T,1);
@@ -57,14 +57,15 @@ feedBackCount = 0;
 % Delay bound
 % if the B == 1 there is no bound
 global B;
-B = 1;
+B = 5;
 type = 'bound';  
 % bound
 % linear
 % log
 % square
+y1 = 8;
 rng(1);
-OGD_Primary(T,type);
+OGD_Primary(T,y1,type);
 %types = {'square','bound','linear','log','square'};
 % for i = types
 % OGD_DELAY(char(i))
@@ -82,17 +83,16 @@ end
 
 
 
-function out = OGD_Primary(T,type)
+function out = OGD_Primary(T,y1,type)
 %   global regrets_div_t;
   global experts;
   global myChoices;
-  global regrets;
   
 
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
   
-  [myRewards,expertsRewards]= iteration(0,T,false,type);
+  [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
   
   disp('End Loop');
   imgXCompare = figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
@@ -106,7 +106,7 @@ function out = OGD_Primary(T,type)
   saveas(imgXCompare,strcat('img/',type,'_xcompare'),'png');
   
   imgRegret = figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
-  plot(regrets);
+  plot(outRegrets,'DisplayName','regrets');
   title('Regret','FontSize',20,'FontWeight','normal');
   saveas(imgRegret,strcat('img/',type,'_regret'),'png');
   
@@ -122,18 +122,17 @@ function out = OGD_Primary(T,type)
   legend('myRewards','expertsRewards');
   hold off;
   saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
-  
-  out = regrets;
+  out = outRegrets;
   close all;
 end
 
 
-function[outMyRewards,outExpertsRewards]=iteration(t_b,t_e,doubling_flag,type)
+function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doubling_flag,type)
   global G;
   global D;
   global Z;
   global B;
-  global y;
+%   global y;
   global eta;
   global gzs;  
   global x_bound;
@@ -147,40 +146,59 @@ function[outMyRewards,outExpertsRewards]=iteration(t_b,t_e,doubling_flag,type)
   global delaytimes;
   global feedBackCount;
 
-  u = 10;
-  x_t = 0;
-%   gz = 0;
+  y = y1;
 
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
-  if t_b == 0
-%   Z(1:end) = D * rand(size(Z,1),1);
+  if t_b == 1
+   
 %   gzs(1)=G(2:end) * Z;
-    x_t = project(y,x_bound);
-%   y = y + (gradients(x_t,gzs(1),eta,G));
+   % t = 0
+    z_t = project(y1,x_bound);
+    % y + 1
+    Z(1:end) = D * rand(size(Z,1),1);
+    gz =G(2:end) * Z;
+    y = y + (gradients(z_t,gz,eta,G));  
+    gzs(1)=G(2:end) * Z;
     
-   %gDelayedFeedBack(B,D,G,Z,0,x_t,eta,feedbackHeap,type);
+    Z(1:end) = D * rand(size(Z,1),1);
+    gDelayedFeedBack(B,D,G,Z,1, z_t,eta,feedbackHeap,type);
   end
 
+  % from 1
   for t = t_b : t_e 
-    isFeedBack = false;
+        % generate delayed feedback
+
+   
     % generate feedback delay
-    Z(1:end) = D * rand(size(Z,1),1);
-    gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type);
+    %   gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type);
     
     if doubling_flag 
-      eta1 = t_b+1; 
+      eta1 = t_b; 
     else
       eta1 = t+1;
     end
     
+    if t == 1
+      myRewards(t) = 0;
+      expertsRewards(t)=0;
+      experts(t) = 0;
+    else
+      myChoices(t) = myChoices(t-1);
+      myRewards(t) = myRewards(t-1) ;
+      expertsRewards(t)=expertsRewards(t-1); 
+      experts(t) = experts(t-1);
+    end
+      
+    
     if feedbackHeap.Count() > 0 
-  
+      % check delay
       out = num2cell(feedbackHeap.ReturnMin());
       [feedBackTime,gz,gradient,reward] = out{:};
       if feedBackTime - 1  == t
-        isFeedBack = true;
+ 
          tmp = 0;
+         % get all feedbacks
         while feedbackHeap.Count() > 0  
            out = num2cell(feedbackHeap.ReturnMin());
            [feedBackTime,gz,gradient,reward] = out{:};
@@ -188,72 +206,52 @@ function[outMyRewards,outExpertsRewards]=iteration(t_b,t_e,doubling_flag,type)
            if feedBackTime - 1 > t
              break;
            else
+             
              feedBackCount = feedBackCount + 1;
              tmp = tmp +1;
-              out = num2cell(feedbackHeap.ExtractMin());
+             out = num2cell(feedbackHeap.ExtractMin());
              [feedBackTime,gz,gradient,reward] = out{:};   
-             
-             myRewards(t) = myRewards(t) + reward;% x_s rewards
-             % update y
-             y = y + (1 / eta1) * gradient;
              % update x
-             x_t = project(y,x_bound);
+             
+             % count feedback loss function
              gzs(feedBackCount) = gz;
+             myChoices(t) = project(y,x_bound); 
+             % update y + 1
+             y = y + (1 / eta1) * gradient;
+             % x_s update rewards;
+             myRewards(t) = myRewards(t) + reward;
              
              % update u
              if feedBackCount ~= 1
                % the t-1 reprent the u(t-1) when there is no feedback u(t) will
                % not be changed
-               u = feedBackCount/(feedBackCount+1) * experts(t - 1) + 1/(feedBackCount+1)* 1 /G(1) * (gzs(feedBackCount) + eta);
+               u = (feedBackCount-1)/feedBackCount * experts(t - 1) + 1/feedBackCount* 1 /G(1) * (gzs(feedBackCount) + eta);
              else
                u =  (gzs(1) + eta) / G(1);
              end
-             u = project(u,x_bound);
+               u = project(u,x_bound);
+               
            end
            delaytimes(t) = tmp;
         end
         
-        %x_t = project(y,x_bound);
-        %y = y + (1 / eta1)*(gradients(x_t,gzs(nonzeroIndex:tmp - 1 ),eta,G));
-        myChoices(t) = x_t;
         experts(t) = u;
-         % caculate expert choice
-         % the feedBackCount = |Fs|
-
-        expertsRewards(t) = Ut_expert(experts(t),gzs,eta,t,G);
+        % note the t = feedbackcount
+        expertsRewards(t) = Ut_expert(experts(t),gzs,eta,feedBackCount,G);
+        
+        Z(1:end) = D * rand(size(Z,1),1);
+        gDelayedFeedBack(B,D,G,Z,t+1, myChoices(t),eta,feedbackHeap,type);
       end
     end
      
-%     if ~isFeedBack
-%       if t ==1
-%         myRewards(t)  = 0;
-%         expertsRewards(t) = 0;          
-% 
-%       else
-%          myRewards(t)  = myRewards(t-1);
-%         
-%       end
-% 
-%     end
-   
-     if t > 1
-       myRewards(t) =  myRewards(t-1);
-       expertsRewards(t) = expertsRewards(t-1);    % expert rewards
-     elseif  ~isFeedBack
-        % is feedback the rewards will be update
-        myRewards(t)  = 0;
-        expertsRewards(t) = 0;      
-     end
-  
-    myChoices(t) = x_t;
-    experts(t) = u;
-         
     regrets(t) = myRewards(t) - expertsRewards(t);
     regrets_div_t(t) = regrets(t) / t;
+    %gDelayedFeedBack(B,D,G,Z,t, myChoices(t),eta,feedbackHeap,type);
 
   end
   outMyRewards = myRewards;
   outExpertsRewards = expertsRewards;
+  outRegrets = regrets;
 %   delayCompare=[myRewards',expertsRewards',delaytimes];
 
 end
@@ -321,10 +319,7 @@ function [feedBackTime,gz] = squareDelay(t,D,G,Z)
   feedBackTime = t^2 + t;
   gz =  G(2:end) * Z;
 end
-
 function gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type)
- feedBackTime = 0;
- gz =0;
   switch lower(type)
     case 'bound'
       [feedBackTime,gz] = boundDelay(t,B,D,G,Z);  

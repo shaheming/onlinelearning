@@ -1,6 +1,6 @@
 function out = OMG()
 %use doubling tricking to iterate
-M = 10; % 2 ^ 15 = 32768
+M = 11; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -40,29 +40,29 @@ y1 = 8;
 %%%%%%%%%%%%%%%%%%
 % main function  %
 %%%%%%%%%%%%%%%%%%
-  isDraw =false;
-  rng(1);
-  out_d=OGD_doubling(M,y1,isDraw);
-  
-  figure('name','Regrets Compare','NumberTitle','off','Position',[100,0,700,500]);
-  plot(out_d,'DisplayName','doubling');
-  hold on;
-  
-  rng(1);
-  out = OGD_Primary(T,y1,isDraw);
-  plot(out,'DisplayName','omd');
-  legend('doubling','omd');
-   
-   hold off;
-  
+  isDraw =true;
 %   rng(1);
-%   regret_s=ogdfix(8,x_bound);
-%   figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
-%   plot(out_s,'DisplayName','out_s');
+%   out_d=OGD_doubling(M,y1,isDraw);
+%   
+%   figure('name','Regrets Compare','NumberTitle','off','Position',[100,0,700,500]);
+%   plot(out_d,'DisplayName','doubling');
 %   hold on;
-%   plot(regret_s,'DisplayName','regret_s');
-%   legend('out_s','regret_s');
-%   hold off;
+  
+   rng(1);
+   out = OGD_Primary(T,y1,isDraw);
+%   plot(out,'DisplayName','omd');
+%   legend('doubling','omd');
+%    
+%    hold off;
+  
+  rng(1);
+  regret_s=ogdfix(8,x_bound);
+  figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
+  plot(out,'DisplayName','out_s');
+  hold on;
+  plot(regret_s,'DisplayName','regret_s');
+  legend('out_s','regret_s');
+  hold off;
 %%%%%%%end%%%%%%%%
 
 
@@ -169,9 +169,15 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
     % in the paper. 
     % In my code we get x at first, then we gerate y
     
+    % get x0
+    x_t = project(y,x_bound);
+    % x0 feedback
+    Z(1:end) = D * rand(size(Z,1),1);
+    gzs(1) = G(2:end) * Z;    
+    y = y + (gradient(x_t,gzs(1),eta,G));
+    
     % get x1
     myChoices(1) = project(y,x_bound);
-
     % get feedback
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(1) = G(2:end) * Z;
@@ -189,8 +195,6 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
     
     % get y + 1
     y = y + (1 / 2)*(gradient(myChoices(1),gzs(1),eta,G));
-    experts(1) = u;
-    
     t_b = t_b + 1;
   end
 
@@ -294,18 +298,26 @@ function regret=ogdfix(y1,x_bound)
   
   % init 
   % we should say given y1,insteading given y0
-  y(1) = y1;
-  x(1) = project(y1,x_bound);
-  % feedback
+  % get x0
+  %  y(1) = y1;
+  x = project(y1,x_bound);
+  % feedback t = 0
   z(:)=rand(n-1,1);
-  s(1)=sum(z);
-  user(1) = -0.5*(x(1)-s(1)-eta)^2; 
+  s =sum(z);
+  % y = 1
+  y(1)= y1 -  (x-sum(z)-eta);
   % feedback function
-  y(2)= y(1) - 1/2 * (x(1)-sum(z)-eta);
+  % t = 1
+  x(1) = project( y(1),x_bound);
+  % feedback t = 1
+  z(:)=rand(n-1,1);
+  s(1) =sum(z);
+  user(1) = -0.5*(x(1)-s(1)-eta)^2; 
   u(1)=s(1)+eta;
   expert_reward(1) = -0.5*(u(1)-s(1)-eta)^2;
   regret(1)=user(1)-expert_reward(1);
-
+  % y 2 
+   y(2)= y(1) - 1/2 * (x(1)-sum(z)-eta);
   for t=2:T
       %user's choice
       
