@@ -1,6 +1,6 @@
 function out = OMG()
 %use doubling tricking to iterate
-M = 11; % 2 ^ 15 = 32768
+M = 10; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -34,121 +34,115 @@ myChoices = zeros(1,T);
 global myRewards;
 myRewards = zeros(1,T);
 % the initial y
-global y;
-y = 8;
 
-global feedbackHeap;
-feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
+y1 = 8;
+
 %%%%%%%%%%%%%%%%%%
 % main function  %
 %%%%%%%%%%%%%%%%%%
-% out=doubling(M);
-% regrets = zeros(1,T);
+  isDraw =false;
   rng(1);
-  out_s = OGD_Primary(T);
-  rng(1);
-  regret_s=ogdfix(8,x_bound);
-  figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
-  plot(out_s,'DisplayName','out_s');
+  out_d=OGD_doubling(M,y1,isDraw);
+  
+  figure('name','Regrets Compare','NumberTitle','off','Position',[100,0,700,500]);
+  plot(out_d,'DisplayName','doubling');
   hold on;
-  plot(regret_s,'DisplayName','regret_s');
-  legend('out_s','regret_s');
-  hold off;
-%  figure('name','Regrets','NumberTitle','off','Position',[100,0,700,500]);
-%  plot(out,'DisplayName','doubling');
-%  hold on;
-%  plot(out_1,'DisplayName','omd');
-%  legend('doubling','omd');
-%  hold off;
+  
+  rng(1);
+  out = OGD_Primary(T,y1,isDraw);
+  plot(out,'DisplayName','omd');
+  legend('doubling','omd');
+   
+   hold off;
+  
+%   rng(1);
+%   regret_s=ogdfix(8,x_bound);
+%   figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
+%   plot(out_s,'DisplayName','out_s');
+%   hold on;
+%   plot(regret_s,'DisplayName','regret_s');
+%   legend('out_s','regret_s');
+%   hold off;
 %%%%%%%end%%%%%%%%
 
 
 end
 
-function out = doubling(M)
+function out = OGD_doubling(M,y1,isDraw)
   global regrets_div_t;
   global experts;
   global myChoices;
-  global regrets;
-  global myRewards;
-  global expertsRewards;
-  global gzs;
-  
-  T = 2^(M)-1; % avoid the last value to 0
-  gzs  = zeros(1,T+1); % <G , Z>
-  %output variable
-  regrets = zeros(1,T);
-  regrets_div_t = zeros(1,T);
-  experts = zeros(1,T);
-  expertsRewards = zeros(1,T);
-  myChoices = zeros(1,T);
-  myRewards = zeros(1,T);
-  
-
+%   global myRewards;
+%   global expertsRewards;
+%   global gzs;
+   yout = y1;
   %rng('shuffle');
   for m = 1 : M
+
+    [yout,regretsOut] = iteration(2^(m-1),2^(m)-1,yout,true);
 %    [myChoices(m),experts(m), regrets(m)]=
-    iteration(2^(m-1),2^(m)-1,true);
 %    regrets_div_t(m) = regrets(m)/2^m;
   end
-
-  figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
-  plot(experts,'DisplayName','experts');
-  hold on;
-  plot(myChoices,'DisplayName','mychoice');
-  legend('experts','mychoice');
-  hold off;
-  figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
-  hold on;
-%    plot(regret_s'+ones(1,size(regret_s,1))*89);
-  plot(regret_s);
-  plot(regrets);
-  hold off;
-
+ 
+  if isDraw
+    figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
+    plot(experts,'DisplayName','experts');
+    hold on;
+    plot(myChoices,'DisplayName','mychoice');
+    legend('experts','mychoice');
+    hold off;
+    figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
+    hold on;
+    %plot(regret_s'+ones(1,size(regret_s,1))*89);
+    
+    plot(regretsOut);
+    hold off;
+    
+    figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
+    plot(regrets_div_t);
+  end
 %   diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
-  figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
-  plot(regrets_div_t);
-  out = regrets;
+
+  out = regretsOut;
 end
 
-function out = OGD_Primary(T)
+function out = OGD_Primary(T,y1,isDraw)
   global regrets_div_t;
   global experts;
   global myChoices;
-  global regrets;
-  global myRewards;
-  global expertsRewards;
-  global gzs;
-  gzs  = zeros(1,T+1); % <G , Z>
-  %output variable
-  regrets = zeros(1,T);
-  regrets_div_t = zeros(1,T);
-  experts = zeros(1,T);
-  expertsRewards = zeros(1,T);
-  myChoices = zeros(1,T);
-  myRewards = zeros(1,T);
+
+%   output variable
+%   regrets = zeros(1,T);
+%   regrets_div_t = zeros(1,T);
+%   experts = zeros(1,T);
+%   expertsRewards = zeros(1,T);
+%   myChoices = zeros(1,T);
+%   myRewards = zeros(1,T);
    
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
   
-  iteration(1,T,false);
+   [yout,regretsOut ]= iteration(1,T,y1,false);
   
   disp('End Loop');
-  figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
-  plot(experts,'DisplayName','experts');
-  hold on;
-  plot(myChoices,'DisplayName','mychoice');
-  legend('experts','mychoice');
-  hold off;
-  figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
-  plot(regrets);
-  figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
-  plot(regrets_div_t);
-  out = regrets;
+  
+  if isDraw
+    figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
+    plot(experts,'DisplayName','experts');
+    hold on;
+    plot(myChoices,'DisplayName','mychoice');
+    legend('experts','mychoice');
+    hold off;
+    figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
+    plot(regretsOut);
+    figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
+    plot(regrets_div_t);
+  end
+  out = regretsOut;
 end
 
 
-function iteration(t_b,t_e,doubling_flag)
+function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
   global G;
   global Z;
   global x_bound;
@@ -161,8 +155,7 @@ function iteration(t_b,t_e,doubling_flag)
   global expertsRewards;
   global myChoices;
   global myRewards;
-  global y;
-
+  
 
 
   
@@ -197,19 +190,21 @@ function iteration(t_b,t_e,doubling_flag)
     % get y + 1
     y = y + (1 / 2)*(gradient(myChoices(1),gzs(1),eta,G));
     experts(1) = u;
+    
+    t_b = t_b + 1;
   end
 
    
  %disp([t_b,t_e]);
-  for t = t_b + 1 : t_e
+  for t = t_b : t_e
     %Z(1:end) = D * rand(size(Z,1),1);
     % gzs(t) = G(2:end) * Z;
     % my choice
 
     if doubling_flag 
-      eta1 = t_b+1; 
+      eta1 = t_b; 
     else
-      eta1 = t+1;
+      eta1 = t + 1;
     end
     
     % get x_t
@@ -243,7 +238,8 @@ function iteration(t_b,t_e,doubling_flag)
     %%%
   end
   
-  
+  yout = y;
+  regretsOut = regrets;
 end
 
 
