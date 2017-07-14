@@ -162,8 +162,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
 %    gzs(1)=G(2:end) * Z;
    
    
-    
-%     t_b = t_b + 1;
+%  t_b = t_b + 1;
   
   end
 

@@ -40,29 +40,29 @@ y1 = 8;
 %%%%%%%%%%%%%%%%%%
 % main function  %
 %%%%%%%%%%%%%%%%%%
-  isDraw =true;
-%   rng(1);
-%   out_d=OGD_doubling(M,y1,isDraw);
-%   
-%   figure('name','Regrets Compare','NumberTitle','off','Position',[100,0,700,500]);
-%   plot(out_d,'DisplayName','doubling');
-%   hold on;
+  isDraw =false;
+  rng(1);
+  out_d=OGD_doubling(M,y1,isDraw);
+  
+  figure('name','Regrets Compare','NumberTitle','off','Position',[100,0,700,500]);
+  plot(out_d,'DisplayName','doubling');
+  hold on;
   
    rng(1);
    out = OGD_Primary(T,y1,isDraw);
-%   plot(out,'DisplayName','omd');
-%   legend('doubling','omd');
-%    
-%    hold off;
-  
-  rng(1);
-  regret_s=ogdfix(8,x_bound);
-  figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
-  plot(out,'DisplayName','out_s');
-  hold on;
-  plot(regret_s,'DisplayName','regret_s');
-  legend('out_s','regret_s');
-  hold off;
+   plot(out,'DisplayName','omd');
+   legend('doubling','omd');
+   
+   hold off;
+%   
+%   rng(1);
+%   regret_s=ogdfix(8,x_bound);
+%   figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
+%   plot(out,'DisplayName','out_s');
+%   hold on;
+%   plot(regret_s,'DisplayName','regret_s');
+%   legend('out_s','regret_s');
+%   hold off;
 %%%%%%%end%%%%%%%%
 
 
