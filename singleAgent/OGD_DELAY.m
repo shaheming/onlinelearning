@@ -1,7 +1,7 @@
-function OMG_DELAY(type)
+function outRegrets = OMG_DELAY(type)
 import MinHeap
 %use doubling tricking to iterate
-M = 11; % 2 ^ 15 = 32768
+M = 13; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -58,14 +58,15 @@ feedBackCount = 0;
 % if the B == 1 there is no bound
 global B;
 B = 5;
-type = 'bound';  
+% type = 'bound';  
 % bound
 % linear
 % log
 % square
 y1 = 8;
 rng(1);
-OGD_Primary(T,y1,type);
+isDraw = false;
+outRegrets = OGD_Primary(T,y1,type,isDraw);
 %types = {'square','bound','linear','log','square'};
 % for i = types
 % OGD_DELAY(char(i))
@@ -78,24 +79,47 @@ OGD_Primary(T,y1,type);
 % hold off;
 %%%%%%%end%%%%%%%%
 
+%%%%%%%%%%%%%%%%
+% Draw regrets %
+%%%%%%%%%%%%%%%%
+% types = {'square','bound','linear','log','square'};
+% regrets = {};
+% for i = types
+%   out = OGD_DELAY(char(i));
+%   regrets{end+1} = {out,char(i)};
+% end
+% regFig = figure('name','Regrets');
+% set(regFig,'position',get(0,'screensize'))
+% for i = regrets
+% plot(i{1}{1},'DisplayName',char(i{1}{2}));
+% hold on;
+% end
+% lgd =legend(types);
+% lgd.FontSize = 16;
+% hold off;
 
 end
 
 
 
-function out = OGD_Primary(T,y1,type)
-%   global regrets_div_t;
+function out = OGD_Primary(T,y1,type,isDraw)
+% global regrets_div_t;
   global experts;
   global myChoices;
   
-
+  if ~isDraw
+    figConfig = 'off';
+  else
+    figConfig = 'on';
+  end
+  
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
   
   [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
   
   disp('End Loop');
-  imgXCompare = figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
+  imgXCompare = figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
   plot(experts,'DisplayName','experts');
   hold on;
   plot(myChoices,'DisplayName','mychoice');
@@ -103,17 +127,17 @@ function out = OGD_Primary(T,y1,type)
   title('My x and expert '' u','FontSize',20,'FontWeight','normal');
   hold off;
   
-  saveas(imgXCompare,strcat('img/',type,'_xcompare'),'png');
   
-  imgRegret = figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
+  
+  imgRegret = figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
   plot(outRegrets,'DisplayName','regrets');
   title('Regret','FontSize',20,'FontWeight','normal');
-  saveas(imgRegret,strcat('img/',type,'_regret'),'png');
+  
   
 %   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
 %   plot(regrets_div_t);
 
-  imgRewardCompare = figure('name','ExpertsRewards and myRewards','NumberTitle','off','Position',[100,500,700,500]);
+  imgRewardCompare = figure('name','ExpertsRewards and myRewards','NumberTitle','off','Position',[100,500,700,500],'visible',figConfig);
 
   plot(myRewards,'DisplayName','myRewards');
   hold on;
@@ -121,9 +145,14 @@ function out = OGD_Primary(T,y1,type)
   plot(expertsRewards,'DisplayName','expertsRewards');
   legend('myRewards','expertsRewards');
   hold off;
+  
+  
+
+   
+  saveas(imgXCompare,strcat('img/',type,'_xcompare'),'png');
+  saveas(imgRegret,strcat('img/',type,'_regret'),'png');
   saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
   out = outRegrets;
-  close all;
 end
 
 
@@ -296,27 +325,22 @@ end
 
 function [feedBackTime,gz] = linearDelay(t,D,slop,G,Z)
   Z(1:end) = D * rand(size(Z,1),1);
-  if t == 0
-    t = randi([1,size(Z,1)]);
-  end
-  feedBackTime = t * slop;
+  feedBackTime = t * slop;  
   gz =  G(2:end) * Z;
 end
 
 function [feedBackTime,gz] = logDelay(t,D,G,Z)
   Z(1:end) = D * rand(size(Z,1),1);
   if t < 2
-    t = randi([1,size(Z,1)]);
+    feedBackTime = t+1;
+  else
+    feedBackTime = t + ceil(t * log2(t));
   end
-  feedBackTime = t + ceil(t * log2(t));
   gz =  G(2:end) * Z;
 end
 
 function [feedBackTime,gz] = squareDelay(t,D,G,Z)
   Z(1:end) = D * rand(size(Z,1),1);
-  if t == 0
-    t = randi([1,size(Z,1)]);
-  end
   feedBackTime = t^2 + t;
   gz =  G(2:end) * Z;
 end
