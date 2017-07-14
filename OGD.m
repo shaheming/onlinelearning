@@ -47,7 +47,7 @@ feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
   rng(1);
   out_s = OGD_Primary(T);
   rng(1);
-  regret_s=ogdfix(8);
+  regret_s=ogdfix(8,x_bound);
   figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
   plot(out_s,'DisplayName','out_s');
   hold on;
@@ -171,56 +171,74 @@ function iteration(t_b,t_e,doubling_flag)
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
+    % I think there is problem
+    % If we choose iterate from 1
+    % The X_1 is decided by which parameter
+    % This simulation is a little bit different from the normal algorithm
+    % in the paper. 
+    % In my code we get x at first, then we gerate y
+  
+    myChoices(1) = project(y,x_bound);
+%     myChoices(1) = x_t;
+    % t = 1 feedback
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(1) = G(2:end) * Z;
-    x_t = project(y,x_bound);
-    y = y + (gradient(x_t,gzs(1),eta,G));
+    u =  (gzs(1) + eta) / G(1);
+    u = project(u,x_bound);
+    experts(1) = u;
+    expertsRewards(1) = Ut_expert(experts(1),gzs,eta,1,G);
+%   expertsRewards(1) = -0.5*(u-gzs(1)-eta)^2;
+    myRewards(1)  = Ut(myChoices(1),gzs(1),eta,G);
+    regrets(1) = myRewards(1) - expertsRewards(1);
+    regrets_div_t(1) = regrets(1);
+    
+    % get y + 1
+    y = y + (1 / 2)*(gradient(myChoices(1),gzs(1),eta,G));
+    experts(1) = u;
   end
 
    
-%   disp([t_b,t_e]);
-  for t = t_b : t_e 
+ %disp([t_b,t_e]);
+  for t = t_b + 1 : t_e
     %Z(1:end) = D * rand(size(Z,1),1);
     % gzs(t) = G(2:end) * Z;
     % my choice
-    Z(1:end) = D * rand(size(Z,1),1);
-    gzs(t) = G(2:end) * Z;
+
     if doubling_flag 
       eta1 = t_b+1; 
     else
       eta1 = t+1;
     end
     
-    x_t = project(y,x_bound);
-    y = y + (1 / eta1)*(gradient(x_t,gzs(t),eta,G));
-    myChoices(t) = x_t;    
-
+    % get x_t
+    myChoices(t) = project(y,x_bound);
+  
+    % feedback
+    Z(1:end) = D * rand(size(Z,1),1);
+    gzs(t) = G(2:end) * Z;
+    
+    % get y t + 1
+    y = y + (1 / eta1)*(gradient(myChoices(t) ,gzs(t),eta,G));
+    
     % my rewards
-    if t ~=1
-      myRewards(t)  = myRewards(t-1) + Ut(x_t,gzs(t),eta,G);
-    else
-      myRewards(t)  = Ut(x_t,gzs(t),eta,G);
-    end
-
-    
+    myRewards(t)  = myRewards(t-1) + Ut(myChoices(t),gzs(t),eta,G);
+   
     % caculate expert choice
-    if t ~= 1
-      u = t/(t+1) * experts(t - 1) + 1/(t+1)* 1 /G(1) * (gzs(t) + eta);
-    else
-      u =  (gzs(t) + eta) / G(1);
-    end
-    
+    u = (t-1)/ t* experts(t - 1) + 1/t * 1 /G(1) * (gzs(t) + eta);
     u = project(u,x_bound);
-    experts(t) = u;
     
-    % expert rewards
+    % record expert's choice
+    experts(t) = u;
+    %expert's rewards
+    
     expertsRewards(t) = Ut_expert(experts(t),gzs,eta,t,G);
     
+    % regret
     regrets(t) = myRewards(t) - expertsRewards(t);
+    
+    % test the big O property
     regrets_div_t(t) = regrets(t) / t;
     %%%
-
-   
   end
   
   
@@ -253,57 +271,70 @@ function x_t = project(y_t,x_bound)
 end
 
 
-function regret=ogdfix(y0)
+function regret=ogdfix(y0,x_bound)
 %x belongs to [0,1000]
+global myRewards;
+global myChoices;
 %y0=8;
-T=2^11-1;
-eta=1;
-n=100;
-s=zeros(T+1,1);
+  T=2^11-1;
+  eta=1;
+  n=100;
+  s=zeros(T+1,1);
 
-y=zeros(T,1);
-% this y has some problem!!!
-% I fix it
-%calculate y(1)
-z=zeros(n-1,1);
-z=rand(n-1,1);
-x0=project(y0,[0,1000]);
-y(1)=y0-(x0-sum(z)-eta);
-% y(1) = y0;
-% regret
-x=zeros(T,1);
+  y=zeros(T,1);
+  % this y has some problem!!!
+  % I fix it
+  %calculate y(1)
+  expert_reward=zeros(T,1);
+  users_reward=zeros(T,1);
+  regret=zeros(T,1);
+  u=zeros(T,1);
+  user=zeros(T,1);
+  z=zeros(n-1,1);
+ 
+  x=zeros(T,1);
 
-s(1)=sum(z);
-u=zeros(T,1);
-user=zeros(T,1);
-expert_reward=zeros(T,1);
-users_reward=zeros(T,1);
-regret=zeros(T,1);
-for t=1:T
-    %user's choice
-    z=rand(n-1,1);
-    x(t)=project(y(t),[0,1000]);
-    s(t)=sum(z);
-    y(t+1)=y(t)-(x(t)-s(t)-eta)/(t+1);
-    %user performance
-    users_reward(t)=-0.5*(x(t)-s(t)-eta)^2; 
-    if t==1
-        user(t)=users_reward(t);
-    else
-        user(t)=user(t-1)+users_reward(t);
-    %best expert performance
-    end
-    if t==1
-        u(t)=s(t)+eta;
-    else
-        u(t)=u(t-1)*(t-1)/t+(s(t)+eta)/t; 
-    end
-    for j=1:t
-        expert_reward(t)=expert_reward(t)-0.5*(u(t)-s(j)-eta)^2;
-    end
-    %calculate regret
-    regret(t)=user(t)-expert_reward(t);
-    end
+  x0=project(y0,x_bound);
+  y(1)=y0;
+  
+  x(1) = x0;
+  % feedback
+  z(:)=rand(n-1,1);
+  s(1)=sum(z);
+  user(1) = -0.5*(x(1)-s(1)-eta)^2; 
+  % feedback function
+  y(2)= y(1) - 1/2 * (x0-sum(z)-eta);
+  u(1)=s(1)+eta;
+  expert_reward(1) = -0.5*(u(1)-s(1)-eta)^2;
+  regret(1)=user(1)-expert_reward(1);
+
+  for t=2:T
+      %user's choice
+      
+      % get x and save user choice
+      x(t)=project(y(t),x_bound);
+
+      % get feedback
+      z=rand(n-1,1);
+      s(t)=sum(z);
+
+      % update y
+      y(t+1)=y(t)-(x(t)-s(t)-eta)/(t+1);
+      %user performance
+      users_reward(t)=-0.5*(x(t)-s(t)-eta)^2; 
+ 
+      user(t)=user(t-1)+users_reward(t);
+      %best expert performance
+     
+
+      u(t)=u(t-1)*(t-1)/t+(s(t)+eta)/t; 
+
+      for j=1:t
+          expert_reward(t)=expert_reward(t)-0.5*(u(t)-s(j)-eta)^2;
+       end
+      %calculate regret
+      regret(t)=user(t)-expert_reward(t);
+   end
 end
 
 

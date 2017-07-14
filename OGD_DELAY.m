@@ -92,7 +92,7 @@ function out = OGD_Primary(T,type)
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
   
-  [myRewards,expertsRewards]= iteration(1,T,false,type);
+  [myRewards,expertsRewards]= iteration(0,T,false,type);
   
   disp('End Loop');
   imgXCompare = figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
@@ -153,16 +153,21 @@ function[outMyRewards,outExpertsRewards]=iteration(t_b,t_e,doubling_flag,type)
 
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
-  if t_b == 1
+  if t_b == 0
+%   Z(1:end) = D * rand(size(Z,1),1);
+%   gzs(1)=G(2:end) * Z;
     x_t = project(y,x_bound);
-    gzs(1)=G(2:end) * Z;
-    y = y + (gradients(x_t,gzs(1),eta,G));
+%   y = y + (gradients(x_t,gzs(1),eta,G));
+    
    %gDelayedFeedBack(B,D,G,Z,0,x_t,eta,feedbackHeap,type);
   end
 
   for t = t_b : t_e 
     isFeedBack = false;
+    % generate feedback delay
+    Z(1:end) = D * rand(size(Z,1),1);
     gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type);
+    
     if doubling_flag 
       eta1 = t_b+1; 
     else
