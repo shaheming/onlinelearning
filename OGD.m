@@ -44,11 +44,10 @@ feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
 %%%%%%%%%%%%%%%%%%
 % out=doubling(M);
 % regrets = zeros(1,T);
-rng(1);
+  rng(1);
   out_s = OGD_Primary(T);
   rng(1);
   regret_s=ogdfix(8);
-  rng(1);
   figure('name','RG','NumberTitle','off','Position',[0,500,700,500]);
   plot(out_s,'DisplayName','out_s');
   hold on;
@@ -85,17 +84,14 @@ function out = doubling(M)
   myChoices = zeros(1,T);
   myRewards = zeros(1,T);
   
-  rng(1);
+
   %rng('shuffle');
   for m = 1 : M
 %    [myChoices(m),experts(m), regrets(m)]=
     iteration(2^(m-1),2^(m)-1,true);
 %    regrets_div_t(m) = regrets(m)/2^m;
   end
-  
-   rng(1);
-   
-  
+
   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
   hold on;
@@ -105,7 +101,7 @@ function out = doubling(M)
   figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
   hold on;
 %    plot(regret_s'+ones(1,size(regret_s,1))*89);
-   plot(regret_s);
+  plot(regret_s);
   plot(regrets);
   hold off;
 
@@ -134,7 +130,9 @@ function out = OGD_Primary(T)
    
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
+  
   iteration(1,T,false);
+  
   disp('End Loop');
   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
@@ -176,22 +174,27 @@ function iteration(t_b,t_e,doubling_flag)
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(1) = G(2:end) * Z;
     x_t = project(y,x_bound);
+    y = y + (gradient(x_t,gzs(1),eta,G));
   end
 
+   
 %   disp([t_b,t_e]);
   for t = t_b : t_e 
     %Z(1:end) = D * rand(size(Z,1),1);
     % gzs(t) = G(2:end) * Z;
     % my choice
+    Z(1:end) = D * rand(size(Z,1),1);
+    gzs(t) = G(2:end) * Z;
     if doubling_flag 
       eta1 = t_b+1; 
     else
       eta1 = t+1;
     end
+    
     x_t = project(y,x_bound);
     y = y + (1 / eta1)*(gradient(x_t,gzs(t),eta,G));
-    
-    myChoices(t) = x_t;
+    myChoices(t) = x_t;    
+
     % my rewards
     if t ~=1
       myRewards(t)  = myRewards(t-1) + Ut(x_t,gzs(t),eta,G);
@@ -216,9 +219,8 @@ function iteration(t_b,t_e,doubling_flag)
     regrets(t) = myRewards(t) - expertsRewards(t);
     regrets_div_t(t) = regrets(t) / t;
     %%%
-    
-    Z(1:end) = D * rand(size(Z,1),1);
-    gzs(t+1) = G(2:end) * Z;
+
+   
   end
   
   
@@ -264,14 +266,13 @@ y=zeros(T,1);
 % I fix it
 %calculate y(1)
 z=zeros(n-1,1);
-
+z=rand(n-1,1);
 x0=project(y0,[0,1000]);
-
-% y(1)=y0-(x0-sum0-eta);
-y(1) = y0;
+y(1)=y0-(x0-sum(z)-eta);
+% y(1) = y0;
 % regret
 x=zeros(T,1);
-z=rand(n-1,1);
+
 s(1)=sum(z);
 u=zeros(T,1);
 user=zeros(T,1);
@@ -280,12 +281,9 @@ users_reward=zeros(T,1);
 regret=zeros(T,1);
 for t=1:T
     %user's choice
-%     for i=2:n
-%         z(i)=rand(1);
-%     end
     z=rand(n-1,1);
     x(t)=project(y(t),[0,1000]);
-    s(t+1)=sum(z);
+    s(t)=sum(z);
     y(t+1)=y(t)-(x(t)-s(t)-eta)/(t+1);
     %user performance
     users_reward(t)=-0.5*(x(t)-s(t)-eta)^2; 
