@@ -238,7 +238,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         
         experts(t) = u;
         % note the t = feedbackcount
-        expertsRewards(t) = expertReward(experts(t),gzs,feedBackCount);
+        expertsRewards(t) = expertLoss(experts(t),gzs,feedBackCount);
         
       end
     end
@@ -271,7 +271,7 @@ function uout = userLoss(x_t,gz)
   uout = 0.5 * (x_t  - gz)^2;
 end
 
-function uout = expertReward(u,gzs,t)
+function uout = expertLoss(u,gzs,t)
   uout = 0.5 * (t * ( u^2 )+sum(-2* u * gzs(1:t) + gzs(1:t).^2));
 end
 %the projection funciton
