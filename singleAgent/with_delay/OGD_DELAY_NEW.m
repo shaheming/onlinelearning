@@ -113,19 +113,23 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   
   [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
   
+  
   fprintf('End Loop\n');
-  imgXCompare = figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
+  headline = sprintf('LOGD %s Delay Choice',type);
+  imgXCompare = figure('name',headline,'NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
+
   plot(experts,'DisplayName','experts');
   hold on;
   plot(myChoices,'DisplayName','mychoice');
   lg = legend('experts','mychoice');
   lg.FontSize = 16;
-  title('My x and expert '' u','FontSize',20,'FontWeight','normal');
+  title(headline,'FontSize',20,'FontWeight','normal');
   hold off;
   
-  imgRegret = figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
+  headline = sprintf('LOGD %s Delay Regret',type);
+  imgRegret = figure('name',headline,'NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
   plot(outRegrets,'DisplayName','regrets');
-  title('Regret','FontSize',20,'FontWeight','normal');
+  title(headline,'FontSize',20,'FontWeight','normal');
   
   
 %   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
