@@ -1,14 +1,14 @@
 
-function  OGD_DELAY_NEW( M )
-  %   M = 15;
-  mkdir img OGD_DELAY_NEW;
+function  OGD_DELAY_FLLOW( M )
+  % M = 15;
+  mkdir img OGD_DELAY_FLLOW;
   global img_path;
-  img_path ='OGD_DELAY_NEW/';
+  img_path ='OGD_DELAY_FLLOW/';
   types = {'bound','linear','log','square'};
   regrets = {};
   for i = types
     rng(1);
-    [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M);
+    [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,false);
     regrets{end+1} = {outRegrets,outMyChoices,char(i)};
   end
   regFig = figure('name','Regrets');
@@ -39,7 +39,7 @@ end
 
 
 
-function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M)
+function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   import MinHeap
   %use doubling tricking to iterate
   % 2 ^ 15 = 32768
@@ -82,19 +82,15 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M)
   %%%%%%%%%%%%%%%%%%
   % out=doubling(M);
   % regrets = zeros(1,T);
-  
-  
   % Delay bound
   % if the B == 1 there is no bound
   global B;
   B = 5;
   % type = 'bound';
   y1 = 8;
-  isDraw = true;
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
-  
-  
+
 end
 
 
@@ -113,9 +109,9 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   fprintf('Begin Loop with %s form delay\n',type);
   fprintf('Iterate %d turns\n',T);
   
-  [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
+  [~,~,outRegrets]= iteration(1,T,y1,false,type);
   
-  
+  % [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
   fprintf('End Loop\n');
   headline = sprintf('LOGD %s Delay Choice',type);
   imgXCompare = figure('name',headline,'NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
@@ -147,7 +143,6 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   global img_path;
   saveas(imgXCompare,strcat('img/',img_path,type,'_xcompare'),'png');
   saveas(imgRegret,strcat('img/',img_path,type,'_regret'),'png');
-  % saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
   outMyChoices =myChoices;
 end
 
@@ -168,7 +163,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   global feedBackCount;
   global D;
   y = y1;
-  
+  lastUpdateTime = 0;
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -182,9 +177,6 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   for t = t_b : t_e
     % generate delayed feedback
     %  generate feedback dela
-    
-    
-    
     if t == 1
       myChoices(1) = project(y,x_bound);
       myRewards(t) = 0;
@@ -202,17 +194,19 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
     if feedbackHeap.Count()
       % check delay
       out = num2cell(feedbackHeap.ReturnMin());
-      [feedBackTime,gz,gradient,reward] = out{:};
+      [feedBackTime,~,~,~] = out{:};
       if feedBackTime - 1  == t
         if doubling_flag
           eta1 = t_b+1;
         else
-          eta1 = t+1;
+          eta1 = lastUpdateTime+1;
         end
+        lastUpdateTime = t;
+        
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());
-          [feedBackTime,gz,gradient,reward] = out{:};
+          [feedBackTime,~,~,~] = out{:};
           
           if feedBackTime - 1 > t
             break;
@@ -221,7 +215,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
             feedBackCount = feedBackCount + 1;
             
             out = num2cell(feedbackHeap.ExtractMin());
-            [feedBackTime,gz,gradient,reward] = out{:};
+            [~,gz,gradient,reward] = out{:};
             
             % count feedback loss function
             gzs(feedBackCount) = gz;
@@ -350,8 +344,7 @@ function out = doubling(M)
     iteration(2^(m-1),2^(m)-1,true);
   end
   
-  % regret_s=ogddoublingtrick(M-1);
-  
+
   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
   hold on;

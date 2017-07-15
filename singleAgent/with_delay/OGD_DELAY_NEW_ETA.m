@@ -300,12 +300,12 @@ function [feedBackTime,gz] = linearDelay(t,slop,D)
 end
 
 function [feedBackTime,gz] = logDelay(t,D)
-  if t < 2
-    feedBackTime = t+1;
-  else
-    feedBackTime = t + ceil(t * log2(t));
+  d = ceil(t * log(t));
+  if d  <= 1
+    d = 1;
   end
-  gz =  rand(1)*D;
+  feedBackTime = t + d;
+  gz  =  rand(1)*D;
 end
 
 function [feedBackTime,gz] = squareDelay(t,D)
