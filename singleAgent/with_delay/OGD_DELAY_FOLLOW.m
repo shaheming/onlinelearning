@@ -91,7 +91,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   y1 = 8;
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
-
+  
 end
 
 
@@ -164,8 +164,8 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   global feedBackCount;
   global D;
   y = y1;
-%   feedBackSum = 0;
-%   feedBackCountLast = 1;
+  %   feedBackSum = 0;
+  %   feedBackCountLast = 1;
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -185,7 +185,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
       myChoices(1) = project(y,x_bound);
       myRewards(t) = 0;
       expertsRewards(t)=0;
-      experts(t) = 0;     
+      experts(t) = 0;
     else
       myChoices(t) = project(y,x_bound);
       myRewards(t) = myRewards(t-1) ;
@@ -199,11 +199,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
       out = num2cell(feedbackHeap.ReturnMin());
       [feedBackTime,~,~,~] = out{:};
       if feedBackTime - 1  == t
-        if doubling_flag
-          eta1 = t_b+1;
-        else
-          eta1 = t+1;
-        end
+        
         feedBackSum = 0;
         feedBackCountLast = 0;
         
@@ -233,7 +229,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
           end
           
         end
-         y = y - (1 / eta1)* 1/feedBackCountLast * feedBackSum;
+        
         experts(t) = u;
         % note the t = feedbackcount
         expertsRewards(t) = expertLoss(experts(t),gzs,feedBackCount);
@@ -241,6 +237,13 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
       end
     end
     
+    if doubling_flag
+      eta1 = t_b+1;
+    else
+      eta1 = t+1;
+    end
+    
+    y = y - (1 / eta1)* 1/feedBackCountLast * feedBackSum;
     regrets(t) = myRewards(t) - expertsRewards(t);
     regrets_div_t(t) = regrets(t) / t;
   end
@@ -346,7 +349,7 @@ function out = doubling(M)
     iteration(2^(m-1),2^(m)-1,true);
   end
   
-
+  
   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
   hold on;
