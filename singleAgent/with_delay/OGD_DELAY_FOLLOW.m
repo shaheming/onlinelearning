@@ -1,5 +1,5 @@
 
-function  OGD_DELAY_FLLOW( M )
+function  OGD_DELAY_FOLLOW( M )
   % M = 15;
   mkdir img OGD_DELAY_FLLOW;
   global img_path;
@@ -77,6 +77,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   feedbackHeap.ExtractMin();
   global feedBackCount;
   feedBackCount = 0;
+  
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
@@ -163,7 +164,8 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   global feedBackCount;
   global D;
   y = y1;
-  lastUpdateTime = 0;
+%   feedBackSum = 0;
+%   feedBackCountLast = 1;
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -171,6 +173,8 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
     z_t = project(y1,x_bound);
     gz =rand(1)*D;
     y = y - gradients(z_t,gz);
+    feedBackSum = gradients(z_t,gz);
+    feedBackCountLast = 1;
   end
   
   % from 1
@@ -181,8 +185,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
       myChoices(1) = project(y,x_bound);
       myRewards(t) = 0;
       expertsRewards(t)=0;
-      experts(t) = 0;
-      
+      experts(t) = 0;     
     else
       myChoices(t) = project(y,x_bound);
       myRewards(t) = myRewards(t-1) ;
@@ -199,9 +202,10 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         if doubling_flag
           eta1 = t_b+1;
         else
-          eta1 = lastUpdateTime+1;
+          eta1 = t+1;
         end
-        lastUpdateTime = t;
+        feedBackSum = 0;
+        feedBackCountLast = 0;
         
         % get all feedbacks
         while feedbackHeap.Count() > 0
@@ -219,19 +223,17 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
             
             % count feedback loss function
             gzs(feedBackCount) = gz;
-            
+            feedBackCountLast = feedBackCountLast + 1;
+            feedBackSum = feedBackSum + gradient;
             % update y + 1
-            y = y - (1 / eta1) * gradient;
             myRewards(t) = myRewards(t) + reward;
-            
             % update u
-            
             u= updateExpert(experts,t,feedBackCount,gzs);
             u = project(u,x_bound);
           end
           
         end
-        
+         y = y - (1 / eta1)* 1/feedBackCountLast * feedBackSum;
         experts(t) = u;
         % note the t = feedbackcount
         expertsRewards(t) = expertLoss(experts(t),gzs,feedBackCount);
