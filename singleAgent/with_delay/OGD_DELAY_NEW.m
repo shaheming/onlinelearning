@@ -6,9 +6,12 @@ function  OGD_DELAY_NEW( M )
   img_path ='OGD_DELAY_NEW/';
   types = {'bound','linear','log','square'};
   regrets = {};
+  
+  isDraw = false;
+  
   for i = types
     rng(1);
-    [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M);
+    [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
     regrets{end+1} = {outRegrets,outMyChoices,char(i)};
   end
   regFig = figure('name','Regrets');
@@ -18,7 +21,7 @@ function  OGD_DELAY_NEW( M )
     plot(i{1}{1},'DisplayName',char(i{1}{3}));
     hold on;
   end
-  lgd =legend(types);
+  lgd =legend(cellstr(types));
   lgd.FontSize = 16;
   hold off;
   
@@ -39,7 +42,7 @@ end
 
 
 
-function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M)
+function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   import MinHeap
   %use doubling tricking to iterate
   % 2 ^ 15 = 32768
@@ -90,7 +93,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M)
   B = 5;
   % type = 'bound';
   y1 = 8;
-  isDraw = true;
+
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
   
@@ -306,7 +309,8 @@ function [feedBackTime,gz] = linearDelay(t,slop,D)
 end
 
 function [feedBackTime,gz] = logDelay(t,D)
-  d = ceil(t * log(t));
+  d = ceil( t * log(t));
+  %d = ceil( sqrt(t) * log(t));
   if d  <= 1
     d = 1;
   end
