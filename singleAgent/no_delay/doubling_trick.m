@@ -184,7 +184,7 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
     % my choice
 
     if doubling_flag 
-      eta1 = t_b; 
+      eta1 = t_b+1; 
     else
       eta1 = t + 1;
     end
@@ -365,7 +365,7 @@ for m=0:period
           
           z=rand(n-1,1);
           s(t)=sum(z);
-          y(t+1)=y(t)-(x(t)-s(t)-eta)/((2^m));
+          y(t+1)=y(t)-(x(t)-s(t)-eta)/(2^m+1);
         %user performance
         users_reward(t)=-0.5*(x(t)-s(t)-eta)^2; 
         if t==1

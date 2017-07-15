@@ -1,46 +1,7 @@
-
-function  OGD_DELAY( M )
-%   M = 15;
-  mkdir img;
-  types = {'square','bound','linear','log','square'};
-  regrets = {};
-  for i = types
-    rng(1);
-    [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M);
-    regrets{end+1} = {outRegrets,outMyChoices,char(i)};
-  end
-  regFig = figure('name','Regrets');
-  set(regFig,'position',get(0,'screensize'));
-  
-  for i = regrets
-    plot(i{1}{1},'DisplayName',char(i{1}{3}));
-    hold on;
-  end
-  lgd =legend(types);
-  lgd.FontSize = 16;
-  hold off;
-  
-  cFig = figure('name','Choices');
-  set(cFig,'position',get(0,'screensize'));
-  
-  for i = regrets
-    plot(i{1}{2},'DisplayName',char(i{1}{3}));
-    hold on;
-  end
-  lgd =legend(types);
-  lgd.FontSize = 16;
-  hold off;  
-  
-  saveas(regFig,strcat('img/regretsCompare'),'png');
-  saveas(cFig,strcat('img/choicesCompare'),'png');
-end
-
-
-
-function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M)
+function outRegrets = OMG_DELAY(type)
 import MinHeap
 %use doubling tricking to iterate
-% 2 ^ 15 = 32768
+M = 13; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -96,20 +57,52 @@ feedBackCount = 0;
 % Delay bound
 % if the B == 1 there is no bound
 global B;
-B = 1;
+B = 5;
 % type = 'bound';  
+% bound
+% linear
+% log
+% square
 y1 = 8;
 rng(1);
 isDraw = false;
-[outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
+outRegrets = OGD_Primary(T,y1,type,isDraw);
+%types = {'square','bound','linear','log','square'};
+% for i = types
+% OGD_DELAY(char(i))
+% end
+
+% figure('name','Regrets','NumberTitle','off','Position',[0,500,700,500]);
+% plot(out,'DisplayName','doubling');
+% hold on;
+% plot(out1,'DisplayName','omd');
+% hold off;
 %%%%%%%end%%%%%%%%
 
+%%%%%%%%%%%%%%%%
+% Draw regrets %
+%%%%%%%%%%%%%%%%
+% types = {'square','bound','linear','log','square'};
+% regrets = {};
+% for i = types
+%   out = OGD_DELAY(char(i));
+%   regrets{end+1} = {out,char(i)};
+% end
+% regFig = figure('name','Regrets');
+% set(regFig,'position',get(0,'screensize'))
+% for i = regrets
+% plot(i{1}{1},'DisplayName',char(i{1}{2}));
+% hold on;
+% end
+% lgd =legend(types);
+% lgd.FontSize = 16;
+% hold off;
 
 end
 
 
 
-function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
+function out = OGD_Primary(T,y1,type,isDraw)
 % global regrets_div_t;
   global experts;
   global myChoices;
@@ -120,12 +113,12 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
     figConfig = 'on';
   end
   
-  fprintf('Begin Loop with %s form delay\n',type);
-  fprintf('Iterate %d turns\n',T);
+  disp('Begin Loop');
+  fprintf('Iterate %d turns',T);
   
   [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
   
-  fprintf('End Loop\n');
+  disp('End Loop');
   imgXCompare = figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
   plot(experts,'DisplayName','experts');
   hold on;
@@ -133,6 +126,8 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   legend('experts','mychoice');
   title('My x and expert '' u','FontSize',20,'FontWeight','normal');
   hold off;
+  
+  
   
   imgRegret = figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
   plot(outRegrets,'DisplayName','regrets');
@@ -142,18 +137,22 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
 %   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
 %   plot(regrets_div_t);
 
-%   imgRewardCompare = figure('name','ExpertsRewards and myRewards','NumberTitle','off','Position',[100,500,700,500],'visible',figConfig);
-%   plot(myRewards,'DisplayName','myRewards');
-%   hold on;
-%   title('Rewards Compare','FontSize',20,'FontWeight','normal');
-%   plot(expertsRewards,'DisplayName','expertsRewards');
-%   legend('myRewards','expertsRewards');
-%   hold off;
+  imgRewardCompare = figure('name','ExpertsRewards and myRewards','NumberTitle','off','Position',[100,500,700,500],'visible',figConfig);
+
+  plot(myRewards,'DisplayName','myRewards');
+  hold on;
+  title('Rewards Compare','FontSize',20,'FontWeight','normal');
+  plot(expertsRewards,'DisplayName','expertsRewards');
+  legend('myRewards','expertsRewards');
+  hold off;
   
+  
+
+   
   saveas(imgXCompare,strcat('img/',type,'_xcompare'),'png');
   saveas(imgRegret,strcat('img/',type,'_regret'),'png');
-% saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
- outMyChoices =myChoices;
+  saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
+  out = outRegrets;
 end
 
 
@@ -268,7 +267,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         
         experts(t) = u;
         % note the t = feedbackcount
-        expertsRewards(t) = expertReward(experts(t),gzs,eta,feedBackCount,G);
+        expertsRewards(t) = Ut_expert(experts(t),gzs,eta,feedBackCount,G);
         
        
 %         gDelayedFeedBack(B,D,G,Z,t, myChoices(t),eta,feedbackHeap,type);
@@ -293,11 +292,11 @@ function uout = gradients(x_t,gzs,eta,G)
   uout = sum( -G(1)*((G(1) * x_t- eta) * ones(size(gzs , 1)) - gzs ));  
 end
 % the reward function U
-function uout = userLoss(x_t,gzs,eta,G)
+function uout = Ut(x_t,gzs,eta,G)
   uout = sum(-0.5 .* ((G(1)*x_t - eta ) * ones(size(gzs , 1)) - gzs).^2);
 end
 
-function uout = expertReward(u,gzs,eta,t,G)
+function uout = Ut_expert(u,gzs,eta,t,G)
   uout = -0.5 * (t * ((G(1)* u - eta)^2 )+sum(-2*(G(1)*u -eta) * gzs(1:t) + gzs(1:t).^2));
 end
 %the projection funciton
@@ -360,7 +359,7 @@ function gDelayedFeedBack(B,D,G,Z,t,x_t,eta,feedbackHeap,type)
   end
    
     gradient = gradients(x_t,gz,eta,G);
-    reward = userLoss(x_t,gz,eta,G);
+    reward = Ut(x_t,gz,eta,G);
     feedbackHeap.InsertKey([feedBackTime,gz,gradient,reward]);
 end
 
