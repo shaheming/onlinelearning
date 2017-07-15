@@ -1,6 +1,6 @@
 
 function  OGD_DELAY_NEW_ETA( M )
-  %   M = 15;
+  % M = 15;
   mkdir img OGD_DELAY_NEW_ETA;
   global img_path;
   img_path ='OGD_DELAY_NEW_ETA/';
@@ -82,19 +82,15 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   %%%%%%%%%%%%%%%%%%
   % out=doubling(M);
   % regrets = zeros(1,T);
-  
-  
   % Delay bound
   % if the B == 1 there is no bound
   global B;
   B = 5;
   % type = 'bound';
   y1 = 8;
-  
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
-  
-  
+
 end
 
 
@@ -113,9 +109,9 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   fprintf('Begin Loop with %s form delay\n',type);
   fprintf('Iterate %d turns\n',T);
   
-  [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
+  [~,~,outRegrets]= iteration(1,T,y1,false,type);
   
-  
+  % [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
   fprintf('End Loop\n');
   headline = sprintf('LOGD %s Delay Choice',type);
   imgXCompare = figure('name',headline,'NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
@@ -181,9 +177,6 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   for t = t_b : t_e
     % generate delayed feedback
     %  generate feedback dela
-    
-    
-    
     if t == 1
       myChoices(1) = project(y,x_bound);
       myRewards(t) = 0;
@@ -201,7 +194,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
     if feedbackHeap.Count()
       % check delay
       out = num2cell(feedbackHeap.ReturnMin());
-      [feedBackTime,gz,gradient,reward] = out{:};
+      [feedBackTime,~,~,~] = out{:};
       if feedBackTime - 1  == t
         if doubling_flag
           eta1 = t_b+1;
@@ -210,11 +203,10 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         end
         lastUpdateTime = t;
         
-        
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());
-          [feedBackTime,gz,gradient,reward] = out{:};
+          [feedBackTime,~,~,~] = out{:};
           
           if feedBackTime - 1 > t
             break;
@@ -223,7 +215,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
             feedBackCount = feedBackCount + 1;
             
             out = num2cell(feedbackHeap.ExtractMin());
-            [feedBackTime,gz,gradient,reward] = out{:};
+            [~,gz,gradient,reward] = out{:};
             
             % count feedback loss function
             gzs(feedBackCount) = gz;
