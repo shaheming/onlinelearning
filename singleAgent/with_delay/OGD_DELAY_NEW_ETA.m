@@ -1,14 +1,14 @@
 
-function  OGD_DELAY_NEW( M )
+function  OGD_DELAY_NEW_ETA( M )
   %   M = 15;
-  mkdir img OGD_DELAY_NEW;
+  mkdir img OGD_DELAY_NEW_ETA;
   global img_path;
-  img_path ='OGD_DELAY_NEW/';
+  img_path ='OGD_DELAY_NEW_ETA/';
   types = {'bound','linear','log','square'};
   regrets = {};
   for i = types
     rng(1);
-    [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M);
+    [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,false);
     regrets{end+1} = {outRegrets,outMyChoices,char(i)};
   end
   regFig = figure('name','Regrets');
@@ -39,7 +39,7 @@ end
 
 
 
-function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M)
+function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   import MinHeap
   %use doubling tricking to iterate
   % 2 ^ 15 = 32768
@@ -90,7 +90,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M)
   B = 5;
   % type = 'bound';
   y1 = 8;
-  isDraw = true;
+  
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
   
@@ -147,7 +147,6 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   global img_path;
   saveas(imgXCompare,strcat('img/',img_path,type,'_xcompare'),'png');
   saveas(imgRegret,strcat('img/',img_path,type,'_regret'),'png');
-  % saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
   outMyChoices =myChoices;
 end
 
@@ -168,7 +167,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   global feedBackCount;
   global D;
   y = y1;
-  
+  lastUpdateTime = 0;
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -207,8 +206,11 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         if doubling_flag
           eta1 = t_b+1;
         else
-          eta1 = t+1;
+          eta1 = lastUpdateTime+1;
         end
+        lastUpdateTime = t;
+        
+        
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());
@@ -350,8 +352,7 @@ function out = doubling(M)
     iteration(2^(m-1),2^(m)-1,true);
   end
   
-  % regret_s=ogddoublingtrick(M-1);
-  
+
   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
   plot(experts,'DisplayName','experts');
   hold on;
