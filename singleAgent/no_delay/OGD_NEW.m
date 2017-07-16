@@ -281,7 +281,7 @@ function regret=ogdfix(y1,x_bound)
   user=zeros(T,1);
   z=zeros(n-1,1);
  
-  x=zeros(T,1);
+  x0=zeros(T,1);
   
   % init 
   % we should say given y1,insteading given y0
@@ -292,7 +292,7 @@ function regret=ogdfix(y1,x_bound)
   z(:)=rand(n-1,1);
   s =sum(z);
   % y = 1
-  y(1)= y1 -  (x-sum(z)-eta);
+  y(1)= y1 -  (x0-sum(z)-eta);
   % feedback function
   % t = 1
   x(1) = project( y(1),x_bound);
