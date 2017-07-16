@@ -1,4 +1,4 @@
-function out = OMG()
+function out = doubling_trick()
 %use doubling tricking to iterate
 M = 11; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
@@ -40,7 +40,7 @@ y1 = 8;
 %%%%%%%%%%%%%%%%%%
 % main function  %
 %%%%%%%%%%%%%%%%%%
-  isDraw =true;
+  isDraw =false;
   rng(1);
   out_d=OGD_doubling(M,y1,isDraw);
   
