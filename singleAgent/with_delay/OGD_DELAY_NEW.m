@@ -3,8 +3,15 @@ function  OGD_DELAY_NEW( M )
   %   M = 15;
   mkdir img OGD_DELAY_NEW;
   global img_path;
+  
+  global B;
+  B = 1;
+  % type = 'bound';
+  global step;
+  step = 1;
+  
   img_path ='OGD_DELAY_NEW/';
-  types = {'bound','linear','log','square'};
+  types = {'nodelay','bound','linear','log','square','exp','step'};
   regrets = {};
   
   isDraw = false;
@@ -18,22 +25,25 @@ function  OGD_DELAY_NEW( M )
   set(regFig,'position',get(0,'screensize'));
   
   for i = regrets
-    plot(i{1}{1},'DisplayName',char(i{1}{3}));
+    plot(i{1}{1},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
     hold on;
   end
-  lgd =legend(cellstr(types));
-  lgd.FontSize = 16;
+  [legh,objh,~,~] =legend(cellstr(types),'FontSize',14);
+  set(objh,'linewidth',2);
   hold off;
+  
+ 
   
   cFig = figure('name','Choices');
   set(cFig,'position',get(0,'screensize'));
   
   for i = regrets
-    plot(i{1}{2},'DisplayName',char(i{1}{3}));
+    plot(i{1}{2},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
     hold on;
   end
-  lgd =legend(types);
-  lgd.FontSize = 16;
+  [legh,objh,~,~] =legend(types);
+  legh.FontSize = 20;
+  set(objh,'linewidth',2);
   hold off;
   
   saveas(regFig,strcat('img/',img_path,'regretsCompare'),'png');
@@ -56,7 +66,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   global D;
   D = 100;
   global gzs;
-  gzs  = zeros(1,T+1); % <G , Z>
+  gzs  = zeros(1,T); % <G , Z>
   % output variable
   global regrets;
   regrets = zeros(1,T);
@@ -89,9 +99,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   
   % Delay bound
   % if the B == 1 there is no bound
-  global B;
-  B = 10;
-  % type = 'bound';
+
   y1 = 8;
 
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
@@ -123,17 +131,18 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   headline = sprintf('LOGD %s Delay Choice',type);
   imgXCompare = figure('name',headline,'NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
   
-  plot(experts,'DisplayName','experts');
+  plot(experts,'DisplayName','experts','LineWidth',1.5);
   hold on;
-  plot(myChoices,'DisplayName','mychoice');
-  lg = legend('experts','mychoice');
-  lg.FontSize = 16;
+  plot(myChoices,'DisplayName','mychoice','LineWidth',1.5);
+  [legh,objh,outh,outm]  = legend('experts','mychoice');
+  legh.FontSize = 16;
+  set(objh,'linewidth',2);
   title(headline,'FontSize',20,'FontWeight','normal');
   hold off;
   
   headline = sprintf('LOGD %s Delay Regret',type);
   imgRegret = figure('name',headline,'NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
-  plot(outRegrets,'DisplayName','regrets');
+  plot(outRegrets,'DisplayName','regrets','LineWidth',1.5);
   title(headline,'FontSize',20,'FontWeight','normal');
   
   
@@ -170,6 +179,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   global feedbackHeap;
   global feedBackCount;
   global D;
+  global step;
   y = y1;
   
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
@@ -179,6 +189,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
     z_t = project(y1,x_bound);
     gz =rand(1)*D;
     y = y - gradients(z_t,gz);
+    gzs(1:end) = rand(1,t_e)*D;
   end
   
   % from 1
@@ -186,21 +197,21 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
     % generate delayed feedback
     %  generate feedback dela
     
+    % update x 
+
     
+    gDelayedFeedBack(B,step,t,feedbackHeap,type);
+    
+    myChoices(t) = project(y,x_bound);
+    u=updateExpert(experts,t,t,gzs);
+    experts(t)= project(u,x_bound);
+    expertsRewards(t)=expertLoss(experts(t),gzs,t);
     
     if t == 1
-      myChoices(1) = project(y,x_bound);
-      myRewards(t) = 0;
-      expertsRewards(t)=0;
-      experts(t) = 0;
-      
+      myRewards(t) = userLoss(myChoices(t),gzs(t));
     else
-      myChoices(t) = project(y,x_bound);
-      myRewards(t) = myRewards(t-1) ;
-      expertsRewards(t)=expertsRewards(t-1);
-      experts(t) = experts(t-1);
+      myRewards(t) = myRewards(t-1) + userLoss(myChoices(t),gzs(t));
     end
-    gDelayedFeedBack(B,t, myChoices(t),D,feedbackHeap,type);
     
     if feedbackHeap.Count()
       % check delay
@@ -215,7 +226,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());
-          [feedBackTime,gz,gradient,reward] = out{:};
+          [feedBackTime,choiceTime,~,~] = out{:};
           
           if feedBackTime - 1 > t
             break;
@@ -224,27 +235,15 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
             feedBackCount = feedBackCount + 1;
             
             out = num2cell(feedbackHeap.ExtractMin());
-            [feedBackTime,gz,gradient,reward] = out{:};
+            [~,choiceTime,~,~] = out{:};
             
             % count feedback loss function
-            gzs(feedBackCount) = gz;
-            
+            %gzs(feedBackCount) = gz;
             % update y + 1
-            y = y - (1 / eta1) * gradient;
-            myRewards(t) = myRewards(t) + reward;
-            
-            % update u
-            
-            u= updateExpert(experts,t,feedBackCount,gzs);
-            u = project(u,x_bound);
+            y = y - (1 / eta1) * gradients(myChoices(choiceTime),gzs(choiceTime));
+            %myRewards(t) = myRewards(t) + reward;
           end
-          
         end
-        
-        experts(t) = u;
-        % note the t = feedbackcount
-        expertsRewards(t) = expertLoss(experts(t),gzs,feedBackCount);
-        
       end
     end
     
@@ -261,7 +260,7 @@ end
 function u = updateExpert(experts,t,feedBackTimes,gzs)
   % note this with change with loss function
   if t ~= 1
-    u = (feedBackTimes-1)/feedBackTimes * experts(t-1) + 1/feedBackTimes* gzs(feedBackTimes);
+    u = (t-1)/t * experts(t-1) + 1/t* gzs(t);
   else
     u =  gzs(1);
   end
@@ -273,7 +272,7 @@ function uout = gradients(x_t,gz)
 end
 % the reward function U
 function uout = userLoss(x_t,gz)
-  uout = 0.5 * (x_t  - gz)^2;
+  uout = 0.5 * (x_t - gz)^2;
 end
 
 function uout = expertLoss(u,gzs,t)
@@ -297,49 +296,62 @@ end
 %  delay function   %
 %%%%%%%%%%%%%%%%%%%%%
 
-function [feedBackTime,gz] = boundDelay(t,B,D)
-  
+function [feedBackTime] = boundDelay(t,B)
   feedBackTime = randi([1,B])+t;
-  gz =  rand(1)*D;
 end
 
-function [feedBackTime,gz] = linearDelay(t,slop,D)
-  feedBackTime = t * slop;
-  gz =  rand(1)*D;
+function [feedBackTime] = linearDelay(t,slop)
+  feedBackTime = t+t * slop;
 end
 
-function [feedBackTime,gz] = logDelay(t,D)
+function [feedBackTime] = logDelay(t)
   d = ceil( t * log(t));
-  %d = ceil( sqrt(t) * log(t));
   if d  <= 1
     d = 1;
   end
   feedBackTime = t + d;
-  gz  =  rand(1)*D;
 end
 
-function [feedBackTime,gz] = squareDelay(t,D)
+function [feedBackTime] = squareDelay(t)
   feedBackTime = t^2 + t;
-  gz =  rand(1)*D;
 end
 
-function gDelayedFeedBack(B,t,x_t,D,feedbackHeap,type)
+function [feedBackTime] = expDelay(t)
+  feedBackTime = 2^t + t;
+end
+
+function [feedBackTime] = stepDelay(t,step)
+    remainder = mod(t,step);
+    if remainder ~=0
+    feedBackTime = (step-remainder) + t+1;
+    else
+      feedBackTime = t+1;
+    end
+end
+
+function gDelayedFeedBack(B,step,t,feedbackHeap,type)
   switch lower(type)
+    case 'nodelay'
+      [feedBackTime] = boundDelay(t,1);
     case 'bound'
-      [feedBackTime,gz] = boundDelay(t,B,D);
+      [feedBackTime] = boundDelay(t,B);
     case 'linear'
-      [feedBackTime,gz] =  linearDelay(t,2,D);
+      [feedBackTime] =  linearDelay(t,1);
     case 'log'
-      [feedBackTime,gz] = logDelay(t,D);
+      [feedBackTime] = logDelay(t);
     case 'square'
-      [feedBackTime,gz] = squareDelay(t,D);
+      [feedBackTime] = squareDelay(t);
+    case 'exp'
+      [feedBackTime] = expDelay(t);
+    case 'step'
+      [feedBackTime] = stepDelay(t,step);      
     otherwise
       error('Delay type err');
   end
   
-  gradient = gradients(x_t,gz);
-  reward = userLoss(x_t,gz);
-  feedbackHeap.InsertKey([feedBackTime,gz,gradient,reward]);
+  gradient = nan;
+  reward = nan;
+  feedbackHeap.InsertKey([feedBackTime,t,gradient,reward]);
 end
 
 function out = doubling(M)
