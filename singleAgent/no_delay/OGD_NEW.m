@@ -1,4 +1,4 @@
-function out = OMG()
+function out = OMG_NEW()
 %use doubling tricking to iterate
 M = 10; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
@@ -41,19 +41,19 @@ y1 = 8;
 % main function  %
 %%%%%%%%%%%%%%%%%%
   isDraw =true;
-  rng(1);
-  out_d=OGD_doubling(M,y1,isDraw);
-  
-  figure('name','Regrets Compare','NumberTitle','off','Position',[100,0,700,500]);
-  plot(out_d,'DisplayName','doubling');
-  hold on;
+%   rng(1);
+%   out_d=OGD_doubling(M,y1,isDraw);
+%   
+%   figure('name','Regrets Compare','NumberTitle','off','Position',[100,0,700,500]);
+%   plot(out_d,'DisplayName','doubling');
+%   hold on;
   
    rng(1);
    out = OGD_Primary(T,y1,isDraw);
-   plot(out,'DisplayName','omd');
-   legend('doubling','omd');
-   
-   hold off;
+%    plot(out,'DisplayName','omd');
+%    legend('doubling','omd');
+%    
+%    hold off;
 %   
 %   rng(1);
 %   regret_s=ogdfix(8,x_bound);
@@ -98,8 +98,8 @@ function out = OGD_doubling(M,y1,isDraw)
     plot(regretsOut);
     hold off;
     
-    figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
-    plot(regrets_div_t);
+%     figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
+%     plot(regrets_div_t);
   end
 %   diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
 
@@ -122,7 +122,7 @@ function out = OGD_Primary(T,y1,isDraw)
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
   
-   [yout,regretsOut ]= iteration(1,T,y1,false);
+   [~,regretsOut ]= iteration(1,T,y1,false);
   
   disp('End Loop');
   
@@ -135,8 +135,8 @@ function out = OGD_Primary(T,y1,isDraw)
     hold off;
     figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
     plot(regretsOut);
-    figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
-    plot(regrets_div_t);
+%     figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
+%     plot(regrets_div_t);
   end
   out = regretsOut;
 end
@@ -173,7 +173,7 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
     % x0 feedback
     Z(1:end) = D * rand(size(Z,1),1);
     gzs(1) = G(2:end) * Z;    
-    y = y + (gradient(x_t,gzs(1),eta,G));
+    y = y - gradient(x_t,gzs(1));
   end
    
   for t = t_b : t_e
@@ -182,7 +182,7 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
     % my choice
 
     if doubling_flag 
-      eta1 = t_b; 
+      eta1 = t_b+1; 
     else
       eta1 = t + 1;
     end
@@ -195,27 +195,24 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
     gzs(t) = G(2:end) * Z;
     
     % get y t + 1
-    y = y + (1 / eta1)*(gradient(myChoices(t) ,gzs(t),eta,G));
+    y = y - (1 / eta1)*gradient(myChoices(t),gzs(t));
     
     % my rewards
     if t == 1
-       myRewards(1)  = userLoss(myChoices(1),gzs(1),eta,G);
+       myRewards(1)  = userLoss(myChoices(1),gzs(1));
     else
-       myRewards(t)  = myRewards(t-1) + userLoss(myChoices(t),gzs(t),eta,G);
+       myRewards(t)  = myRewards(t-1) + userLoss(myChoices(t),gzs(t));
     end
     % caculate expert choice
-    if t == 1
-       u =  (gzs(1) + eta) / G(1);
-    else
-       u = (t-1)/ t* experts(t - 1) + 1/t * 1 /G(1) * (gzs(t) + eta);
-    end
+
+    u = updateExpert(experts,t,t,gzs);
     u = project(u,x_bound);
     
     % record expert's choice
     experts(t) = u;
     %expert's rewards
     
-    expertsRewards(t) = expertReward(experts(t),gzs,eta,t,G);
+    expertsRewards(t) = expertLoss(experts(t),gzs,t);
     
     % regret
     regrets(t) = myRewards(t) - expertsRewards(t);
@@ -229,18 +226,25 @@ function [yout,regretsOut ]=iteration(t_b,t_e,y,doubling_flag)
   regretsOut = regrets;
 end
 
-
+function u = updateExpert(experts,t,feedBackTimes,gzs)
+  % note this with change with loss function
+  if t ~= 1
+    u = (feedBackTimes-1)/feedBackTimes * experts(t-1) + 1/feedBackTimes* gzs(feedBackTimes);
+  else
+    u =  gzs(1);
+  end
+end
 % the difference of reward function U
-function uout = gradient(x_t,gz,eta,G)
-  uout = - G(1)*(G(1)*x_t - gz - eta);  
+function uout = gradient(x_t,gz)
+  uout = x_t - gz;
 end
 % the reward function U
-function uout = userLoss(x_t,gz,eta,G)
-  uout = -0.5 * (G(1).*x_t - gz - eta).^2;
+function uout = userLoss(x_t,gz)
+  uout = 0.5 * (x_t  - gz)^2;
 end
 
-function uout = expertReward(u,gzs,eta,t,G)
-  uout = -0.5 * (t * ((G(1)* u - eta)^2 )+sum(-2*(G(1)*u -eta) * gzs(1:t) + gzs(1:t).^2));
+function uout = expertLoss(u,gzs,t)
+  uout = 0.5 * (t * ( u^2 )+sum(-2* u * gzs(1:t) + gzs(1:t).^2));
 end
 %the projection funciton
 function x_t = project(y_t,x_bound)

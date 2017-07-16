@@ -90,7 +90,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   % Delay bound
   % if the B == 1 there is no bound
   global B;
-  B = 5;
+  B = 10;
   % type = 'bound';
   y1 = 8;
 
