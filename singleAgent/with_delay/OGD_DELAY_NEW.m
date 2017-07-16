@@ -5,10 +5,10 @@ function  OGD_DELAY_NEW( M )
   global img_path;
   
   global B;
-  B = 1;
+  B = 5;
   % type = 'bound';
   global step;
-  step = 1;
+  step = 5;
   
   img_path ='OGD_DELAY_NEW/';
   types = {'nodelay','bound','linear','log','square','exp','step'};
@@ -131,18 +131,18 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   headline = sprintf('LOGD %s Delay Choice',type);
   imgXCompare = figure('name',headline,'NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
   
-  plot(experts,'DisplayName','experts','LineWidth',1.5);
+  plot(experts,'DisplayName','experts','LineWidth',1);
   hold on;
-  plot(myChoices,'DisplayName','mychoice','LineWidth',1.5);
-  [legh,objh,outh,outm]  = legend('experts','mychoice');
+  plot(myChoices,'DisplayName','mychoice','LineWidth',1);
+  legh  = legend('experts','mychoice');
   legh.FontSize = 16;
-  set(objh,'linewidth',2);
+%   set(objh,'linewidth',2);
   title(headline,'FontSize',20,'FontWeight','normal');
   hold off;
   
   headline = sprintf('LOGD %s Delay Regret',type);
   imgRegret = figure('name',headline,'NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
-  plot(outRegrets,'DisplayName','regrets','LineWidth',1.5);
+  plot(outRegrets,'DisplayName','regrets','LineWidth',1);
   title(headline,'FontSize',20,'FontWeight','normal');
   
   
@@ -157,8 +157,11 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   %   legend('myRewards','expertsRewards');
   %   hold off;
   global img_path;
-  saveas(imgXCompare,strcat('img/',img_path,type,'_xcompare'),'png');
-  saveas(imgRegret,strcat('img/',img_path,type,'_regret'),'png');
+  
+  
+  %saveas(imgXCompare,strcat('img/',img_path,type,'_xcompare'),'png');
+  %saveas(imgRegret,strcat('img/',img_path,type,'_regret'),'png');
+  
   % saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
   outMyChoices =myChoices;
 end
