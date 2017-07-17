@@ -1,26 +1,33 @@
 
-function  OGD_DELAY_NEW( M )
-  %   M = 15;
-  mkdir img OGD_DELAY_NEW;
+function  StepsizeLOGD( M )
+  % M = 15;
+  mkdir img StepsizeLOGD;
   global img_path;
+  img_path ='StepsizeLOGD/';
+
+  algorithmName = 'StepsizeLOGD';
+  regretsFigName = sprintf('%s-%s',algorithmName,'Regrets');
+  xFigName = sprintf('%s-%s',algorithmName,'X');
   
-  global B;
-  B = 5;
   % type = 'bound';
+  global B; 
+  B = 5;
+  
+  % step delay
   global step;
   step = 5;
+
   
-  img_path ='OGD_DELAY_NEW/';
-  types = {'nodelay','bound','linear','log','square','exp','step'};
+ types = {'nodelay','bound','linear','log','square','exp','step'};
   regrets = {};
   
-  isDraw = false;
+isDraw = false;
   for i = types
     rng(1);
     [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
     regrets{end+1} = {outRegrets,outMyChoices,char(i)};
   end
-  regFig = figure('name','Regrets','NumberTitle','off');
+  regFig = figure('name',regretsFigName,'NumberTitle','off');
   set(regFig,'position',get(0,'screensize'));
   
   for i = regrets
@@ -33,7 +40,7 @@ function  OGD_DELAY_NEW( M )
   
   hold off;
 
-  cFig = figure('name','Choices','NumberTitle','off');
+  cFig = figure('name',xFigName,'NumberTitle','off');
   set(cFig,'position',get(0,'screensize'));
   
   for i = regrets
@@ -45,8 +52,8 @@ function  OGD_DELAY_NEW( M )
   legh.FontSize = 20;
   hold off;
   
-  saveas(regFig,strcat('img/',img_path,'regretsCompare'),'png');
-  saveas(cFig,strcat('img/',img_path,'choicesCompare'),'png');
+  saveas(regFig,strcat('img/',regretsFigName),'png');
+  saveas(cFig,strcat('img/',xFigName),'png');
 end
 
 
@@ -183,7 +190,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
   global D;
   global step;
   y = y1;
-  
+ lastUpdateTime = 0; 
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -223,8 +230,9 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         if doubling_flag
           eta1 = t_b+1;
         else
-          eta1 = t+1;
+          eta1 = lastUpdateTime+1;
         end
+        lastUpdateTime = t;
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());

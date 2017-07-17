@@ -1,9 +1,13 @@
 
-function  OGD_DELAY_FOLLOW( M )
+function  InjectionLOGD( M )
   % M = 15;
-  mkdir img OGD_DELAY_FLLOW;
+  
+  mkdir img injectionLOGD;
   global img_path;
-  img_path ='OGD_DELAY_FLLOW/';
+  img_path ='injectionLOGD';
+  algorithmName = 'injectionLOGD';
+  regretsFigName = sprintf('%s-%s',algorithmName,'Regrets');
+  xFigName = sprintf('%s-%s',algorithmName,'X');
   
   global B;
   B = 5;
@@ -19,7 +23,9 @@ function  OGD_DELAY_FOLLOW( M )
     [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
     regrets{end+1} = {outRegrets,outMyChoices,char(i)};
   end
-  regFig = figure('name','Regrets','NumberTitle','off');
+  
+ 
+  regFig = figure('name',regretsFigName,'NumberTitle','off');
   set(regFig,'position',get(0,'screensize'));
   
   for i = regrets
@@ -29,10 +35,10 @@ function  OGD_DELAY_FOLLOW( M )
   legh =legend(cellstr(types));
   legh.LineWidth = 2;
   legh.FontSize = 20;
-  
   hold off;
-
-  cFig = figure('name','Choices','NumberTitle','off');
+  
+  
+  cFig = figure('name',xFigName,'NumberTitle','off');
   set(cFig,'position',get(0,'screensize'));
   
   for i = regrets
@@ -44,8 +50,8 @@ function  OGD_DELAY_FOLLOW( M )
   legh.FontSize = 20;
   hold off;
   
-  saveas(regFig,strcat('img/',img_path,'regretsCompare'),'png');
-  saveas(cFig,strcat('img/',img_path,'choicesCompare'),'png');
+  saveas(regFig,strcat('img/',regretsFigName),'png');
+  saveas(cFig,strcat('img/',xFigName),'png');
 end
 
 
@@ -98,7 +104,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   % Delay bound
   % if the B == 1 there is no bound
   
-  y1 = 8;
+  y1 = 50;
   
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
