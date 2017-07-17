@@ -17,7 +17,7 @@ function  OGD_DELAY( M )
     hold on;
   end
   lgd =legend(types);
-  lgd.FontSize = 16;
+  lgd.FontSize = 20;
   hold off;
   
   cFig = figure('name','Choices');

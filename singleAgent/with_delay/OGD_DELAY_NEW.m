@@ -15,35 +15,34 @@ function  OGD_DELAY_NEW( M )
   regrets = {};
   
   isDraw = false;
-  
   for i = types
     rng(1);
     [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
     regrets{end+1} = {outRegrets,outMyChoices,char(i)};
   end
-  regFig = figure('name','Regrets');
+  regFig = figure('name','Regrets','NumberTitle','off');
   set(regFig,'position',get(0,'screensize'));
   
   for i = regrets
     plot(i{1}{1},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
     hold on;
   end
-  [legh,objh,~,~] =legend(cellstr(types),'FontSize',14);
-  set(objh,'linewidth',2);
+  legh =legend(cellstr(types));
+  legh.LineWidth = 2;
+  legh.FontSize = 20;
+  
   hold off;
-  
- 
-  
-  cFig = figure('name','Choices');
+
+  cFig = figure('name','Choices','NumberTitle','off');
   set(cFig,'position',get(0,'screensize'));
   
   for i = regrets
     plot(i{1}{2},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
     hold on;
   end
-  [legh,objh,~,~] =legend(types);
+  legh  =legend(types);
+  legh.LineWidth = 2;
   legh.FontSize = 20;
-  set(objh,'linewidth',2);
   hold off;
   
   saveas(regFig,strcat('img/',img_path,'regretsCompare'),'png');
