@@ -1,14 +1,10 @@
 
-function  StepsizeLOGD( M )
+function  OGD_DELAY_NEW_ETA( M )
   % M = 15;
-  mkdir img StepsizeLOGD;
+  mkdir img OGD_DELAY_NEW_ETA;
   global img_path;
-  img_path ='StepsizeLOGD/';
+  img_path ='OGD_DELAY_NEW_ETA/';
 
-  algorithmName = 'StepsizeLOGD';
-  regretsFigName = sprintf('%s-%s',algorithmName,'Regrets');
-  xFigName = sprintf('%s-%s',algorithmName,'X');
-  
   % type = 'bound';
   global B; 
   B = 5;
@@ -17,8 +13,7 @@ function  StepsizeLOGD( M )
   global step;
   step = 5;
 
-  global y0;
-  y0 = 5;
+  
  types = {'nodelay','bound','linear','log','square','exp','step'};
   regrets = {};
   
@@ -28,7 +23,7 @@ isDraw = false;
     [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
     regrets{end+1} = {outRegrets,outMyChoices,char(i)};
   end
-  regFig = figure('name',regretsFigName,'NumberTitle','off');
+  regFig = figure('name','Regrets','NumberTitle','off');
   set(regFig,'position',get(0,'screensize'));
   
   for i = regrets
@@ -41,7 +36,7 @@ isDraw = false;
   
   hold off;
 
-  cFig = figure('name',xFigName,'NumberTitle','off');
+  cFig = figure('name','Choices','NumberTitle','off');
   set(cFig,'position',get(0,'screensize'));
   
   for i = regrets
@@ -53,8 +48,8 @@ isDraw = false;
   legh.FontSize = 20;
   hold off;
   
-  saveas(regFig,strcat('img/',regretsFigName),'png');
-  saveas(cFig,strcat('img/',xFigName),'png');
+  saveas(regFig,strcat('img/',img_path,'regretsCompare'),'png');
+  saveas(cFig,strcat('img/',img_path,'choicesCompare'),'png');
 end
 
 
@@ -88,8 +83,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   global myRewards;
   myRewards = zeros(1,T);
   % the initial y
-  global y0;
-  y1 = y0;
+  
   global delaytimes;
   delaytimes = zeros(T,1);
   
@@ -101,6 +95,15 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
+  % out=doubling(M);
+  % regrets = zeros(1,T);
+  
+  
+  % Delay bound
+  % if the B == 1 there is no bound
+
+  y1 = 8;
+
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
   
@@ -154,6 +157,7 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   %   plot(expertsRewards,'DisplayName','expertsRewards');
   %   legend('myRewards','expertsRewards');
   %   hold off;
+  global img_path;
   
   
   %saveas(imgXCompare,strcat('img/',img_path,type,'_xcompare'),'png');
@@ -306,7 +310,7 @@ function [feedBackTime] = linearDelay(t,slop)
 end
 
 function [feedBackTime] = logDelay(t)
-  d = ceil( t * log2(t));
+  d = ceil( t * log(t));
   if d  <= 1
     d = 1;
   end

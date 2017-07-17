@@ -14,7 +14,9 @@ function  LOGD( M )
   % type = 'bound';
   global step;
   step = 5;
-
+  global y0;
+  y0 = 8;
+  
   types = {'nodelay','bound','linear','log','square','exp','step'};
   regrets = {};
   
@@ -50,7 +52,6 @@ function  LOGD( M )
   hold off;
 
   saveas(regFig,strcat('img/',regretsFigName),'png');
-
   saveas(cFig,strcat('img/',xFigName),'png');
 end
 
@@ -58,9 +59,6 @@ end
 
 function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   import MinHeap
-  %use doubling tricking to iterate
-  % 2 ^ 15 = 32768
-  % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   % T = 50000;
   % your decision domain used in projection
@@ -85,7 +83,8 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   global myRewards;
   myRewards = zeros(1,T);
   % the initial y
-  
+  global y0;
+  y1 = y0;
   global delaytimes;
   delaytimes = zeros(T,1);
   
@@ -97,16 +96,8 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
-  % out=doubling(M);
-  % regrets = zeros(1,T);
-  
-  
-  % Delay bound
-  % if the B == 1 there is no bound
 
-  y1 = 8;
-
-  [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
+  OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
   
   
@@ -116,8 +107,6 @@ end
 
 function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   % global regrets_div_t;
-  global experts;
-  global myChoices;
   
   if ~isDraw
     figConfig = 'off';
@@ -165,7 +154,6 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   
   %saveas(imgXCompare,strcat('img/',img_path,type,'_xcompare'),'png');
   %saveas(imgRegret,strcat('img/',img_path,type,'_regret'),'png');
-  
   % saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
   outMyChoices =myChoices;
 end
@@ -312,7 +300,7 @@ function [feedBackTime] = linearDelay(t,slop)
 end
 
 function [feedBackTime] = logDelay(t)
-  d = ceil( t * log(t));
+  d = ceil( t * log2(t));
   if d  <= 1
     d = 1;
   end

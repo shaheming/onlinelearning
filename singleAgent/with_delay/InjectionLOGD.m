@@ -14,6 +14,8 @@ function  InjectionLOGD( M )
   % type = 'bound';
   global step;
   step = 5;
+  global y0;
+  y0 = 5;
   types = {'nodelay','bound','linear','log','square','exp','step'};
   regrets = {};
   
@@ -85,7 +87,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   global myRewards;
   myRewards = zeros(1,T);
   % the initial y
-  
+  global y0;
   global delaytimes;
   delaytimes = zeros(T,1);
   
@@ -104,7 +106,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   % Delay bound
   % if the B == 1 there is no bound
   
-  y1 = 50;
+  y1 = y;
   
   [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
   %%%%%%%end%%%%%%%%
@@ -174,7 +176,6 @@ end
 function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doubling_flag,type)
   
   global B;
-  %global y;
   global gzs;
   global x_bound;
   global regrets;
@@ -318,7 +319,7 @@ function [feedBackTime] = linearDelay(t,slop)
 end
 
 function [feedBackTime] = logDelay(t)
-  d = ceil( t * log(t));
+  d = ceil( t * log2(t));
   if d  <= 1
     d = 1;
   end
