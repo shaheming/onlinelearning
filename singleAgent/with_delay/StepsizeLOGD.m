@@ -8,25 +8,31 @@ function  StepsizeLOGD( M )
   algorithmName = 'StepsizeLOGD';
   regretsFigName = sprintf('%s-%s',algorithmName,'Regrets');
   xFigName = sprintf('%s-%s',algorithmName,'X');
-  
-  % type = 'bound';
-  global B; 
+
+  global B;
   B = 5;
-  
-  % step delay
   global step;
   step = 5;
-
   global y0;
-  y0 = 5;
- types = {'nodelay','bound','linear','log','square','exp','step'};
-  regrets = {};
+  y0 = 8;
   
-isDraw = false;
+  global x_bound;
+  x_bound = [0,100];
+  % D and  are used to generate Z
+  global D;
+  D = 100;
+  
+
+  isDraw = false;
+  types = {'nodelay','bound','linear','log','square','exp','step'};
+  regrets = {size(types,2)};
+  index = 0;
+  
   for i = types
     rng(1);
+    index = index+ 1;
     [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
-    regrets{end+1} = {outRegrets,outMyChoices,char(i)};
+    regrets{index} = {outRegrets,outMyChoices,char(i)};
   end
   regFig = figure('name',regretsFigName,'NumberTitle','off');
   set(regFig,'position',get(0,'screensize'));
@@ -61,24 +67,14 @@ end
 
 function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   import MinHeap
-  %use doubling tricking to iterate
-  % 2 ^ 15 = 32768
-  % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
-  % T = 50000;
   % your decision domain used in projection
-  global x_bound;
-  x_bound = [0,100];
-  % D and eta are used in reward function U
-  global D;
-  D = 100;
   global gzs;
   gzs  = zeros(1,T); % <G , Z>
   % output variable
   global regrets;
   regrets = zeros(1,T);
-  global regrets_div_t;
-  regrets_div_t = zeros(1,T);
+ 
   global experts;
   experts = zeros(1,T);
   global expertsRewards;
@@ -87,31 +83,19 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   myChoices = zeros(1,T);
   global myRewards;
   myRewards = zeros(1,T);
+  
   % the initial y
   global y0;
   y1 = y0;
-  global delaytimes;
-  delaytimes = zeros(T,1);
+
   
   global feedbackHeap;
   feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
   feedbackHeap.ExtractMin();
-  global feedBackCount;
-  feedBackCount = 0;
+
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
-  [outRegrets,outMyChoices] = OGD_Primary(T,y1,type,isDraw);
-  %%%%%%%end%%%%%%%%
-  
-end
-
-
-
-function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
-  % global regrets_div_t;
-  global experts;
-  global myChoices;
   
   if ~isDraw
     figConfig = 'off';
@@ -121,9 +105,8 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   
   fprintf('Begin Loop with %s form delay\n',type);
   fprintf('Iterate %d turns\n',T);
-  
-  [myRewards,expertsRewards,outRegrets]= iteration(1,T,y1,false,type);
-  
+  %%%% iteration 
+  iteration(1,T,y1,false,type);
   
   fprintf('End Loop\n');
   headline = sprintf('LOGD %s Delay Choice',type);
@@ -134,18 +117,15 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   plot(myChoices,'DisplayName','mychoice','LineWidth',1);
   legh  = legend('experts','mychoice');
   legh.FontSize = 16;
-%   set(objh,'linewidth',2);
   title(headline,'FontSize',20,'FontWeight','normal');
   hold off;
   
   headline = sprintf('LOGD %s Delay Regret',type);
   imgRegret = figure('name',headline,'NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
-  plot(outRegrets,'DisplayName','regrets','LineWidth',1);
+  plot(regrets,'DisplayName','regrets','LineWidth',1);
   title(headline,'FontSize',20,'FontWeight','normal');
-  
-  
-  %   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
-  %   plot(regrets_div_t);
+
+ 
   
   %   imgRewardCompare = figure('name','ExpertsRewards and myRewards','NumberTitle','off','Position',[100,500,700,500],'visible',figConfig);
   %   plot(myRewards,'DisplayName','myRewards');
@@ -154,34 +134,36 @@ function [outRegrets,outMyChoices ]= OGD_Primary(T,y1,type,isDraw)
   %   plot(expertsRewards,'DisplayName','expertsRewards');
   %   legend('myRewards','expertsRewards');
   %   hold off;
-  
+  global img_path;
   
   %saveas(imgXCompare,strcat('img/',img_path,type,'_xcompare'),'png');
   %saveas(imgRegret,strcat('img/',img_path,type,'_regret'),'png');
-  
   % saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
   outMyChoices =myChoices;
+  outRegrets =regrets;
+  %%%%%%%end%%%%%%%%
+  
 end
 
 
-function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doubling_flag,type)
+
+function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
   
   global B;
-  %global y;
+  global D;
+  global step;
   global gzs;
   global x_bound;
   global regrets;
-  global regrets_div_t;
   global experts;
   global myChoices;
   global myRewards;
   global expertsRewards;
   global feedbackHeap;
-  global feedBackCount;
-  global D;
-  global step;
+
   y = y1;
  lastUpdateTime = 0; 
+ feedBackCount = 0;
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -203,7 +185,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
     gDelayedFeedBack(B,step,t,feedbackHeap,type);
     
     myChoices(t) = project(y,x_bound);
-    u=updateExpert(experts,t,t,gzs);
+    u=updateExpert(experts,t,gzs);
     experts(t)= project(u,x_bound);
     expertsRewards(t)=expertLoss(experts(t),gzs,t);
     
@@ -227,7 +209,7 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());
-          [feedBackTime,choiceTime,~,~] = out{:};
+          [feedBackTime,~,~,~] = out{:};
           
           if feedBackTime - 1 > t
             break;
@@ -249,16 +231,14 @@ function[outMyRewards,outExpertsRewards,outRegrets]=iteration(t_b,t_e,y1,doublin
     end
     
     regrets(t) = myRewards(t) - expertsRewards(t);
-    regrets_div_t(t) = regrets(t) / t;
+
   end
-  outMyRewards = myRewards;
-  outExpertsRewards = expertsRewards;
-  outRegrets = regrets;
-  %   delayCompare=[myRewards',expertsRewards',delaytimes];
-  
+
+  % delayCompare=[myRewards',expertsRewards',delaytimes];
+  outY = y;
 end
 
-function u = updateExpert(experts,t,feedBackTimes,gzs)
+function u = updateExpert(experts,t,gzs)
   % note this with change with loss function
   if t ~= 1
     u = (t-1)/t * experts(t-1) + 1/t* gzs(t);

@@ -25,10 +25,7 @@ function  LOGD( M )
   isDraw = false;
   types = {'nodelay','bound','linear','log','square','exp','step'};
   regrets = {size(types,2)};
-  
-
   index = 0;
-  
   for i = types
     rng(1);
     index = index+ 1;
