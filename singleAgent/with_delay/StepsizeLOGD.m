@@ -163,7 +163,7 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
 
   y = y1;
  lastUpdateTime = 0; 
- feedBackCount = 0;
+
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -205,6 +205,7 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
         else
           eta1 = lastUpdateTime+1;
         end
+        
         lastUpdateTime = t;
         % get all feedbacks
         while feedbackHeap.Count() > 0
@@ -214,8 +215,6 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
           if feedBackTime - 1 > t
             break;
           else
-            
-            feedBackCount = feedBackCount + 1;
             
             out = num2cell(feedbackHeap.ExtractMin());
             [~,choiceTime,~,~] = out{:};

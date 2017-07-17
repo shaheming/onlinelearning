@@ -204,7 +204,9 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
       out = num2cell(feedbackHeap.ReturnMin());
       [feedBackTime,gz,gradient,reward] = out{:};
       if feedBackTime - 1  == t
-        
+        % clean
+        feedBackCountLast = 1; % void div 0
+        feedBackSum = 0;
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());
@@ -215,7 +217,6 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
           else
             
             feedBackCount = feedBackCount + 1;
-            
             out = num2cell(feedbackHeap.ExtractMin());
             [~,choiceTime,~,~] = out{:};
             

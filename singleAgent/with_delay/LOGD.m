@@ -7,7 +7,7 @@ function  LOGD( M )
   algorithmName = 'LOGD';
   
   regretsFigName = sprintf('%s-%s',algorithmName,'Regrets');
-  xFigName = sprintf('%s-%s',algorithmName,'X');  
+  xFigName = sprintf('%s-%s',algorithmName,'X');
   
   global B;
   B = 5;
@@ -17,7 +17,7 @@ function  LOGD( M )
   y0 = 8;
   
   global x_bound;
-  x_bound = [0,100];
+  x_bound = [0,1000];
   % D and  are used to generate Z
   global D;
   D = 100;
@@ -45,7 +45,7 @@ function  LOGD( M )
   legh.FontSize = 20;
   
   hold off;
-
+  
   cFig = figure('name',xFigName,'NumberTitle','off');
   set(cFig,'position',get(0,'screensize'));
   
@@ -57,7 +57,7 @@ function  LOGD( M )
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;
-
+  
   saveas(regFig,strcat('img/',regretsFigName),'png');
   saveas(cFig,strcat('img/',xFigName),'png');
 end
@@ -73,7 +73,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   % output variable
   global regrets;
   regrets = zeros(1,T);
- 
+  
   global experts;
   experts = zeros(1,T);
   global expertsRewards;
@@ -86,12 +86,12 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   % the initial y
   global y0;
   y1 = y0;
-
+  
   
   global feedbackHeap;
   feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
   feedbackHeap.ExtractMin();
-
+  
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
@@ -123,8 +123,8 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   imgRegret = figure('name',headline,'NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
   plot(outRegrets,'DisplayName','regrets','LineWidth',1);
   title(headline,'FontSize',20,'FontWeight','normal');
-
- 
+  
+  
   
   %   imgRewardCompare = figure('name','ExpertsRewards and myRewards','NumberTitle','off','Position',[100,500,700,500],'visible',figConfig);
   %   plot(myRewards,'DisplayName','myRewards');
@@ -158,26 +158,28 @@ function[outRegrets]=iteration(t_b,t_e,y1,doubling_flag,type)
   global myRewards;
   global expertsRewards;
   global feedbackHeap;
-
- 
+  
+  
   y = y1;
   feedBackCount = 0;
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
     % t = 0
+    % z_0
     z_t = project(y1,x_bound);
     gz =rand(1)*D;
+    % y_1
     y = y - gradients(z_t,gz);
-    gzs(1:end) = rand(1,t_e)*D;
+    gzs(1:end) = rand(1,t_e)* D;
   end
   
   % from 1
   for t = t_b : t_e
     % generate delayed feedback
     % generate feedback dela
-    % update x 
-
+    % update x
+    
     gDelayedFeedBack(B,step,t,feedbackHeap,type);
     
     myChoices(t) = project(y,x_bound);
@@ -214,16 +216,16 @@ function[outRegrets]=iteration(t_b,t_e,y1,doubling_flag,type)
             
             out = num2cell(feedbackHeap.ExtractMin());
             [~,choiceTime,~,~] = out{:};
-           
+            
             y = y - (1 / eta1) * gradients(myChoices(choiceTime),gzs(choiceTime));
-           
+            
           end
         end
       end
     end
     
     regrets(t) = myRewards(t) - expertsRewards(t);
-   
+    
   end
   
   outRegrets = regrets;
@@ -294,12 +296,12 @@ function [feedBackTime] = expDelay(t)
 end
 
 function [feedBackTime] = stepDelay(t,step)
-    remainder = mod(t,step);
-    if remainder ~=0
+  remainder = mod(t,step);
+  if remainder ~=0
     feedBackTime = (step-remainder) + t+1;
-    else
-      feedBackTime = t+1;
-    end
+  else
+    feedBackTime = t+1;
+  end
 end
 
 function gDelayedFeedBack(B,step,t,feedbackHeap,type)
@@ -317,7 +319,7 @@ function gDelayedFeedBack(B,step,t,feedbackHeap,type)
     case 'exp'
       [feedBackTime] = expDelay(t);
     case 'step'
-      [feedBackTime] = stepDelay(t,step);      
+      [feedBackTime] = stepDelay(t,step);
     otherwise
       error('Delay type err');
   end
@@ -328,7 +330,7 @@ function gDelayedFeedBack(B,step,t,feedbackHeap,type)
 end
 
 function out = doubling(M)
- 
+  
   global experts;
   global myChoices;
   global regrets;
