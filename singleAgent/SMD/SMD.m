@@ -1,17 +1,18 @@
 function out = SMD()
 %use doubling tricking to iterate
-M = 10; % 2 ^ 15 = 32768
+M = 5; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
 
 global r_bound;
-r_bound = [0,5];
+r_bound = [0,1];
+y0 = 2;
 % D and eta are used in reward function U
 global D;
 D = 2*pi;
 
-y0 = 2;
+
 
 global eta;
 eta = 1;
@@ -42,7 +43,7 @@ myRewards = zeros(1,T);
 %   plot(out_d,'DisplayName','doubling');
 %   hold on;
   
-   rng(1);
+%    rng(2);
    out = OGD_Primary(T,y0,isDraw);
 %    plot(out,'DisplayName','omd');
 %    legend('doubling','omd');
@@ -137,7 +138,7 @@ function [rOut,regretsOut ]=iteration(t_b,t_e,y0,doubling_flag)
     if doubling_flag 
       eta1 = t_b+1; 
     else
-      eta1 = t + 1;
+      eta1 = 3*t + 1;
     end
     
     % get x_t

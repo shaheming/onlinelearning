@@ -134,7 +134,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   %   plot(expertsRewards,'DisplayName','expertsRewards');
   %   legend('myRewards','expertsRewards');
   %   hold off;
-  global img_path;
+%   global img_path;
   
   %saveas(imgXCompare,strcat('img/',img_path,type,'_xcompare'),'png');
   %saveas(imgRegret,strcat('img/',img_path,type,'_regret'),'png');
@@ -174,6 +174,7 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     gzs(1:end) = rand(1,t_e)*D;
    
     feedBackSum = gradients(z_t,gz);
+%   feedBackSum=0;
     feedBackCountLast = 1;
     feedBackCount = 0;
   end
@@ -184,8 +185,6 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     %  generate feedback dela
     
     % update x
-    
-    
     gDelayedFeedBack(B,step,t,feedbackHeap,type);
     
     myChoices(t) = project(y,x_bound);
