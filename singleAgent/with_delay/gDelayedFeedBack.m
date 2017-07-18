@@ -22,9 +22,6 @@ function feedbackHeap=gDelayedFeedBack(B,step,T,type)
       error('Delay type err');
   end
   
-  gradient = nan;
-  reward = nan;
- 
   feedbackHeap = MinHeap(T,delayData);
 end
 

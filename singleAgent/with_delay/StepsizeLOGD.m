@@ -89,9 +89,10 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   y1 = y0;
 
   
-  global feedbackHeap;
-  feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
-  feedbackHeap.ExtractMin();
+  global B;
+  global step;
+   global feedbackHeap;
+  feedbackHeap=gDelayedFeedBack(B,step,T,type);
 
   %%%%%%%%%%%%%%%%%%
   % main function  %
@@ -106,7 +107,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   fprintf('Begin Loop with %s form delay\n',type);
   fprintf('Iterate %d turns\n',T);
   %%%% iteration 
-  iteration(1,T,y1,false,type);
+  iteration(1,T,y1,false);
   
   fprintf('End Loop\n');
   headline = sprintf('LOGD %s Delay Choice',type);
@@ -147,11 +148,9 @@ end
 
 
 
-function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
+function[outY]=iteration(t_b,t_e,y1,doubling_flag)
   
-  global B;
   global D;
-  global step;
   global gzs;
   global x_bound;
   global regrets;
@@ -162,8 +161,6 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
   global feedbackHeap;
 
   y = y1;
- lastUpdateTime = 0; 
-
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -177,14 +174,7 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
   
   % from 1
   for t = t_b : t_e
-    % generate delayed feedback
-    %  generate feedback dela
-    
     % update x 
-
-    
-    gDelayedFeedBack(B,step,t,feedbackHeap,type);
-    
     myChoices(t) = project(y,x_bound);
     u=updateExpert(experts,t,gzs);
     experts(t)= project(u,x_bound);
@@ -199,7 +189,7 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
     if feedbackHeap.Count()
       % check delay
       out = num2cell(feedbackHeap.ReturnMin());
-      [feedBackTime,gz,gradient,reward] = out{:};
+      [feedBackTime,~] = out{:};
       if feedBackTime - 1  == t
         if doubling_flag
           eta1 = t_b+1;
@@ -207,24 +197,20 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
           eta1 = eta1+1;
         end
         
-%         lastUpdateTime = t;
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());
-          [feedBackTime,~,~,~] = out{:};
+          [feedBackTime,~] = out{:};
           
           if feedBackTime - 1 > t
             break;
           else
             
             out = num2cell(feedbackHeap.ExtractMin());
-            [~,choiceTime,~,~] = out{:};
+            [~,originTime] = out{:};
             
             % count feedback loss function
-            %gzs(feedBackCount) = gz;
-            % update y + 1
-            y = y - (1 / eta1) * gradients(myChoices(choiceTime),gzs(choiceTime));
-            %myRewards(t) = myRewards(t) + reward;
+            y = y - (1 / eta1) * gradients(myChoices(originTime),gzs(originTime));
           end
         end
       end
@@ -233,8 +219,6 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
     regrets(t) = myRewards(t) - expertsRewards(t);
 
   end
-
-  % delayCompare=[myRewards',expertsRewards',delaytimes];
   outY = y;
 end
 
@@ -277,62 +261,67 @@ end
 %  delay function   %
 %%%%%%%%%%%%%%%%%%%%%
 
-function [feedBackTime] = boundDelay(t,B)
-  feedBackTime = randi([1,B])+t;
-end
-
-function [feedBackTime] = linearDelay(t,slop)
-  feedBackTime = t+t * slop;
-end
-
-function [feedBackTime] = logDelay(t)
-  d = ceil( t * log2(t));
-  if d  <= 1
-    d = 1;
-  end
-  feedBackTime = t + d;
-end
-
-function [feedBackTime] = squareDelay(t)
-  feedBackTime = t^2 + t;
-end
-
-function [feedBackTime] = expDelay(t)
-  feedBackTime = 2^t + t;
-end
-
-function [feedBackTime] = stepDelay(t,step)
-    remainder = mod(t,step);
-    if remainder ~=0
-    feedBackTime = (step-remainder) + t+1;
-    else
-      feedBackTime = t+1;
-    end
-end
-
-function gDelayedFeedBack(B,step,t,feedbackHeap,type)
+function feedbackHeap=gDelayedFeedBack(B,step,T,type)
+ 
   switch lower(type)
     case 'nodelay'
-      [feedBackTime] = boundDelay(t,1);
+      [delayData] = boundDelay(T,1);
     case 'bound'
-      [feedBackTime] = boundDelay(t,B);
+      [delayData] = boundDelay(T,B);
     case 'linear'
-      [feedBackTime] =  linearDelay(t,1);
+      [delayData] =  linearDelay(T,1);
     case 'log'
-      [feedBackTime] = logDelay(t);
+      [delayData] = logDelay(T);
     case 'square'
-      [feedBackTime] = squareDelay(t);
+      [delayData] = squareDelay(T);
     case 'exp'
-      [feedBackTime] = expDelay(t);
+      [delayData] = expDelay(T);
     case 'step'
-      [feedBackTime] = stepDelay(t,step);      
+      [delayData] = stepDelay(T,step);
     otherwise
       error('Delay type err');
   end
   
-  gradient = nan;
-  reward = nan;
-  feedbackHeap.InsertKey([feedBackTime,t,gradient,reward]);
+  feedbackHeap = MinHeap(T,delayData);
+end
+
+function [delayData] = boundDelay(T,B)
+  iterations =  (1:T)';
+  delayData = [randi([1,B],T,1)+iterations,iterations];
+end
+
+function [delayData] = linearDelay(T,slop)
+  iterations =  (1:T)';
+  delayData = [iterations.*(slop+1),iterations];
+end
+
+function [delayData] = logDelay(T)
+  iterations =  (1:T)';
+  delayData = [ceil(log2(iterations).*(iterations)+iterations),iterations];
+  delayData(1,1) = 1 + delayData(1,2);
+end
+
+function [delayData] = squareDelay(T)
+  iterations =  (1:T)';
+  delayData = [iterations.^2 + iterations,iterations];
+end
+
+function [delayData] = expDelay(T)
+  iterations = (1:T)';
+  delayData = [2.^iterations + iterations,iterations];  
+end
+
+function [delayData] = stepDelay(T,step)
+  delayData = zeros(T,2);
+  for t = 1:T
+  remainder = mod(t,step);
+  if remainder ~=0
+    delayData(t,1) = (step-remainder) + t+1;
+  else
+    delayData(t,1) = t+1;
+  end
+  delayData(t,2) = t;
+  end
 end
 
 function out = doubling(M)
