@@ -41,7 +41,7 @@ function  StepsizeLOGD( M )
     plot(i{1}{1},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
     hold on;
   end
-  legh =legend(cellstr(types));
+  legh  =legend(types,'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   
@@ -54,7 +54,7 @@ function  StepsizeLOGD( M )
     plot(i{1}{2},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
     hold on;
   end
-  legh  =legend(types);
+  legh  =legend(types,'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;

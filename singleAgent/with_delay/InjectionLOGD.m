@@ -23,7 +23,7 @@ function  InjectionLOGD( M )
   D = 100;
   
   isDraw = false;
- types = {'nodelay','bound','linear','log','square','exp','step'};
+  types = {'nodelay','bound','linear','log','square','exp','step'};
   regrets = {size(types,2)};
   index = 0;
   for i = types
@@ -40,7 +40,7 @@ function  InjectionLOGD( M )
     plot(i{1}{1},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
     hold on;
   end
-  legh =legend(cellstr(types));
+   legh  =legend(types,'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;
@@ -53,7 +53,7 @@ function  InjectionLOGD( M )
     plot(i{1}{2},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
     hold on;
   end
-  legh  =legend(types);
+   legh  =legend(types,'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;
