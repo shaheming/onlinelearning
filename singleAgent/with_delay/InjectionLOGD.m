@@ -14,7 +14,7 @@ function  InjectionLOGD( M )
   global step;
   step = 5;
   global y0;
-  y0 =8;
+  y0 =50;
   
   global x_bound;
   x_bound = [0,100];
@@ -23,11 +23,11 @@ function  InjectionLOGD( M )
   D = 100;
   
   isDraw = false;
-  types = {'nodelay','bound','linear','log','square','exp','step'};
+  types = {'exp','nodelay','bound','linear','log','square','step'};
   regrets = {size(types,2)};
   index = 0;
   for i = types
-    rng(1);
+    rng(2);
     index = index+ 1;
     [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
     regrets{index} = {outRegrets,outMyChoices,char(i)};
@@ -67,6 +67,7 @@ end
 function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   import MinHeap
   T = 2^(M)-1; % avoid the last value to 0
+  
   % your decision domain used in projection
   global gzs;
   gzs  = zeros(1,T); % <G , Z>
@@ -205,7 +206,7 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
       [feedBackTime,gz,gradient,reward] = out{:};
       if feedBackTime - 1  == t
         % clean
-        feedBackCountLast = 1; % void div 0
+        feedBackCountLast = 0; % void div 0
         feedBackSum = 0;
         % get all feedbacks
         while feedbackHeap.Count() > 0
@@ -215,7 +216,6 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
           if feedBackTime - 1 > t
             break;
           else
-            
             feedBackCount = feedBackCount + 1;
             out = num2cell(feedbackHeap.ExtractMin());
             [~,choiceTime,~,~] = out{:};

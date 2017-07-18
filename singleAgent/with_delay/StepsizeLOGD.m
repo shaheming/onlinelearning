@@ -14,7 +14,7 @@ function  StepsizeLOGD( M )
   global step;
   step = 5;
   global y0;
-  y0 = 8;
+  y0 = 50;
   
   global x_bound;
   x_bound = [0,100];
@@ -29,7 +29,7 @@ function  StepsizeLOGD( M )
   index = 0;
   
   for i = types
-    rng(1);
+    rng(2);
     index = index+ 1;
     [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
     regrets{index} = {outRegrets,outMyChoices,char(i)};
@@ -172,6 +172,7 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
     gz =rand(1)*D;
     y = y - gradients(z_t,gz);
     gzs(1:end) = rand(1,t_e)*D;
+    eta1 = 1;
   end
   
   % from 1
@@ -203,10 +204,10 @@ function[outY]=iteration(t_b,t_e,y1,doubling_flag,type)
         if doubling_flag
           eta1 = t_b+1;
         else
-          eta1 = lastUpdateTime+1;
+          eta1 = eta1+1;
         end
         
-        lastUpdateTime = t;
+%         lastUpdateTime = t;
         % get all feedbacks
         while feedbackHeap.Count() > 0
           out = num2cell(feedbackHeap.ReturnMin());

@@ -14,7 +14,7 @@ function  LOGD( M )
   global step;
   step = 5;
   global y0;
-  y0 = 8;
+  y0 = 50;
   
   global x_bound;
   x_bound = [0,1000];
@@ -27,7 +27,7 @@ function  LOGD( M )
   regrets = {size(types,2)};
   index = 0;
   for i = types
-    rng(1);
+    rng(2);
     index = index+ 1;
     [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
     regrets{index} = {outRegrets,outMyChoices,char(i)};
