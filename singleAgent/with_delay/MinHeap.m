@@ -65,7 +65,7 @@ classdef MinHeap < Heap
             %--------------------------------------------------------------
             
             this.SetLength(this.k + 1);
-            this.x(this.k,:) = ones(1,size(this.k,2))* inf;
+            this.x(this.k,:) = ones(1,size(key,2))* inf;
             this.DecreaseKey(this.k,key);
         end
         

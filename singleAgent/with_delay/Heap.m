@@ -152,9 +152,9 @@ classdef Heap < handle
         % Swap elements
         %
         function Swap(this,i,j)
-            val = this.x(i);
-            this.x(i) = this.x(j);
-            this.x(j) = val;
+            val = this.x(i,:);
+            this.x(i,:) = this.x(j,:);
+            this.x(j,:) = val;
         end
         
         %

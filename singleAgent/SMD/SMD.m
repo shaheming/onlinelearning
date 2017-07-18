@@ -6,12 +6,12 @@ T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
 
 global r_bound;
-r_bound = [0,1];
+r_bound = [0,5];
 % D and eta are used in reward function U
 global D;
 D = 2*pi;
 
-y0 = 1;
+y0 = 2;
 
 global eta;
 eta = 1;
@@ -126,7 +126,7 @@ function [rOut,regretsOut ]=iteration(t_b,t_e,y0,doubling_flag)
     r = project(y0,r_bound);
     %x0 feedback
     thetas(1) = rand(1) * D;    
-    y = y0 - 1/100000*gradient(r,thetas(1));
+    y = y0 - 1*gradient(r,thetas(1));
   end
    
   for t = t_b : t_e
@@ -137,7 +137,7 @@ function [rOut,regretsOut ]=iteration(t_b,t_e,y0,doubling_flag)
     if doubling_flag 
       eta1 = t_b+1; 
     else
-      eta1 = 10*t + 1;
+      eta1 = t + 1;
     end
     
     % get x_t

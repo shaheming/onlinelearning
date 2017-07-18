@@ -14,7 +14,7 @@ function  LOGD( M )
   global step;
   step = 5;
   global y0;
-  y0 = 50;
+  y0 = 8;
   
   global x_bound;
   x_bound = [0,1000];

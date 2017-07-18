@@ -14,16 +14,16 @@ function  InjectionLOGD( M )
   global step;
   step = 5;
   global y0;
-  y0 =50;
+  y0 =8;
   
   global x_bound;
-  x_bound = [0,100];
+  x_bound = [0,1000];
   % D and  are used to generate Z
   global D;
   D = 100;
   
   isDraw = false;
-  types = {'exp','nodelay','bound','linear','log','square','step'};
+ types = {'nodelay','bound','linear','log','square','exp','step'};
   regrets = {size(types,2)};
   index = 0;
   for i = types
