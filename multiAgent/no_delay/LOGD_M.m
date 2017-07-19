@@ -7,11 +7,11 @@ function out = LOGD_M(M)
   
   global x_bound;
   x_bound = [0,1;0,2*pi];
-  y0 = [1.5,3*pi];
+  y0 = [0,0,0,0];
   % D and eta are used in reward function U
   global eta;
   eta = 1;
-  N = 5;
+  N = 4;
 
   
   %%%%%%%%%%%%%%%%%%
@@ -35,28 +35,65 @@ function  OGD_Primary(T,y0,N)
   
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
+  y0 = [0,0,0,0];
   %%%iteration begin
-  choices=iteration(1,T,y0,N);
+  choices_1=iteration(1,T,y0,N);
   %%%end
+  y0_1=[0.016815,0.023363,0.031101, 0.016220];
+  choices_2=iteration(1,T,y0_1,N);
+  
   disp('End Loop');
  
+
+  
+  for i = 1:2:N*2
+    lineName{i} =sprintf('p:%d',(i+1)/2);
+    lineName{i+1} =sprintf('p%d*',(i+1)/2);
+  end
+  
   xFig = figure('name','LOGD-MULTIAGENT','NumberTitle','off');
   set(xFig,'position',get(0,'screensize'));
   hold on;
+  matrix1=[y0(1),y0_1(1),y0(2),y0_1(2);choices_1(:,1),choices_2(:,1),choices_1(:,2),choices_2(:,2)];
   
-  for i = 1:N
-    lineName{i} =sprintf('Agent: %d',i);
-  end
-  
-  plot(choices,'DisplayName',char(lineName),'LineWidth',1.5);
+  plot(matrix1(:,1),'-o','DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
+  plot(matrix1(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
+  hold on;
+  plot(matrix1(:,3),'-o','DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  hold on;
+  plot(matrix1(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
   
-  legh  =legend(lineName,'Location','best','EdgeColor','w');
+  hold on;
+  legh  =legend(lineName{1:N},'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;
-  xFigName = sprintf('%s-%s','LOGD_M','X');
+  
+  matrix2=[y0(3),y0_1(3),y0(4),y0_1(4);choices_1(:,3),choices_2(:,3),choices_1(:,4),choices_2(:,4)];
+
+  xFig_1 = figure('name','LOGD-MULTIAGENT','NumberTitle','off');
+  set(xFig_1,'position',get(0,'screensize'));
+  hold on;
+%   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
+  plot(matrix2(:,1),'-o','DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+  hold on;
+  plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
+  hold on;
+  plot(matrix2(:,3),'-o','DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  hold on;
+  plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
+  hold on;
+  legh  =legend(lineName{N+1:end},'Location','best','EdgeColor','w');
+  legh.LineWidth = 2;
+  legh.FontSize = 20;
+  hold off;
+    
+  
+  xFigName = sprintf('%s-%s','LOGD_M-Link-1-2','X');
   saveas(xFig,strcat('img/',xFigName),'png');
+  xFigName = sprintf('%s-%s','LOGD_M-Link-3-4','X');
+  saveas(xFig_1,strcat('img/',xFigName),'png');
   
 end
 
@@ -65,16 +102,19 @@ function outChoices=iteration(t_b,t_e,y0,N)
   
   global x_bound;
   
-  G = rand(N,N);
-  eta =rand(N,1);
-  r_start = rand(N,1);
+  
+  G = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
+  eta = [0.1;0.2;0.3;0.1];
+
+  r_start = [0.5,0.5,0.5,0.5];
   for i = 1:N
     x_bound(i,1) = 0;
-    x_bound(i,2) = 5;
+    x_bound(i,2) = 10^4;
   end
   
   choices=zeros(t_e,N);
-  y0 = 1:N;
+ 
+% 
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -87,7 +127,7 @@ function outChoices=iteration(t_b,t_e,y0,N)
     %Z(1:end) = D * rand(size(Z,1),1);
     % thetas(t) = G(2:end) * Z;
     % my choice
-    eta1 = t + 1;
+    eta1 = t +1;
     %x
     choices(t,:) = project(y,x_bound,N);
     %y
@@ -99,12 +139,12 @@ end
 
 % the difference of reward function U
 function outX = gradient(x,G,r_start,eta)
-  outX = (diag(G).*x'-r_start.*(G*x' - x'.*diag(G)+ eta))';
+  outX = (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))';
 end
 
 % the reward function U
 function uout = userCost(x,G,r_start,eta)
-  uout = (1./(2*diag(G)).*(diag(G).*x'-r_start.*(G*x' - x'.*diag(G)+ eta)).^2)';
+  uout = (1./(2*diag(G)).*(diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).^2)';
 end
 
 
