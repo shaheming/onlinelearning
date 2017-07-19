@@ -1,6 +1,6 @@
 function out = SMD()
 %use doubling tricking to iterate
-M = 5; % 2 ^ 15 = 32768
+M = 6; % 2 ^ 15 = 32768
 % the maxiums turn will iterate T times;
 T = 2^(M)-1; % avoid the last value to 0
 % T = 50000;
@@ -18,7 +18,7 @@ global eta;
 eta = 1;
 
 global thetas;
-thetas  = zeros(1,T+1); % <G , Z>
+thetas  = zeros(1,T); % <G , Z>
 % output variable
 global regrets;
 regrets = zeros(1,T);
@@ -66,7 +66,7 @@ end
 
 
 function out = OGD_Primary(T,y0,isDraw)
-  global experts;
+
   global myChoices;
 
 %   output variable
@@ -82,21 +82,44 @@ function out = OGD_Primary(T,y0,isDraw)
   
    [~,regretsOut ]= iteration(1,T,y0,false);
   
-  disp('End Loop');
+
+   disp('End Loop');
   
+   
+   
+   step = 100;
+   theta = 0:2*pi/step:2*pi;
+   r =0:1/step:1;
+   [THETA,R]=meshgrid(theta,r);
+   G = (3 + sin(5*THETA)+ cos(3*THETA)).*(R.^2).*(5/3-R);
+   figure;
+   hold on;
+   mesh(R.*cos(THETA), R.*sin(THETA), G);
+   hold on;
+   shading interp
+   global thetas;
+   Z=zeros(1,T);
+   for i = 1:T
+     Z(i) = userLoss(myChoices(i),thetas(i));
+   end
+   Z = ones(1,T)*4;
+   plot3(myChoices.*cos(thetas),myChoices.*sin(thetas),Z,'Color','r');
+   hold off;
+   figure;
+   plot(myChoices);
   if isDraw
-    figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
-    plot(experts,'DisplayName','experts');
-    hold on;
-    plot(myChoices,'DisplayName','mychoice');
-    legend('experts','mychoice');
-    hold off;
-    figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
-    plot(regretsOut);
+%     figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
+%     plot(experts,'DisplayName','experts');
+%     hold on;
+%     plot(myChoices,'DisplayName','mychoice');
+%     legend('experts','mychoice');
+%     hold off;
+%     figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
+%     plot(regretsOut);
 %     figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
 %     plot(regrets_div_t);
   end
-  out = regretsOut;
+  out = myChoices';
 end
 
 
@@ -138,7 +161,7 @@ function [rOut,regretsOut ]=iteration(t_b,t_e,y0,doubling_flag)
     if doubling_flag 
       eta1 = t_b+1; 
     else
-      eta1 = 3*t + 1;
+      eta1 = 2*t + 1;
     end
     
     % get x_t
