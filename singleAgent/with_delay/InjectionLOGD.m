@@ -1,20 +1,24 @@
 
 function  InjectionLOGD( M )
   % M = 15;
-  
+  global log_bound;
+  log_bound = M;
   mkdir img injectionLOGD;
   global img_path;
   img_path ='injectionLOGD';
   algorithmName = 'injectionLOGD';
+    global y0;
+  y0 =51;
+  global theta;
+  theta =2;
   regretsFigName = sprintf('%s-%s',algorithmName,'Regrets');
-  xFigName = sprintf('%s-%s',algorithmName,'X');
+  xFigName = sprintf('%s-%s-y0=%d-theta=%d-times-%d',algorithmName,'X',y0,theta,M);
   
   global B;
   B = 5;
   global step;
   step = 5;
-  global y0;
-  y0 =32;
+
   
   global x_bound;
   x_bound = [0,1000];
@@ -24,34 +28,34 @@ function  InjectionLOGD( M )
   
   isDraw = false;
 %   types = {'nodelay','bound','linear','log','square','exp','step'};
-   types = {'linear','log','square'};
-  regrets = {size(types,2)};
+   types = {'log','square','linear'};
+%   regrets = {size(types,2)};
   index = 0;
   for i = types
     rng(2);
     index = index+ 1;
-    [outRegrets,outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
-    regrets{index} = {outRegrets,outMyChoices,char(i)};
+    [outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
+    regrets{index} = {outMyChoices,char(i)};
   end
  
-  regFig = figure('name',regretsFigName,'NumberTitle','off');
-  set(regFig,'position',get(0,'screensize'));
-  
-  for i = regrets
-    plot(i{1}{1},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
-    hold on;
-  end
-   legh  =legend(types,'Location','best','EdgeColor','w');
-  legh.LineWidth = 2;
-  legh.FontSize = 20;
-  hold off;
-  
+%   regFig = figure('name',regretsFigName,'NumberTitle','off');
+%   set(regFig,'position',get(0,'screensize'));
+%   
+%   for i = regrets
+%     plot(i{1}{1},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
+%     hold on;
+%   end
+%    legh  =legend(types,'Location','best','EdgeColor','w');
+%   legh.LineWidth = 2;
+%   legh.FontSize = 20;
+%   hold off;
+%   
   
   cFig = figure('name',xFigName,'NumberTitle','off');
   set(cFig,'position',get(0,'screensize'));
   
   for i = regrets
-    plot(i{1}{2},'DisplayName',char(i{1}{3}),'LineWidth',1.5);
+    plot(i{1}{1},'DisplayName',char(i{1}{2}),'LineWidth',1.5);
     hold on;
   end
    legh  =legend(types,'Location','best','EdgeColor','w');
@@ -59,13 +63,13 @@ function  InjectionLOGD( M )
   legh.FontSize = 20;
   hold off;
   
-  saveas(regFig,strcat('img/',regretsFigName),'png');
+%   saveas(regFig,strcat('img/',regretsFigName),'png');
   saveas(cFig,strcat('img/',xFigName),'png');
 end
 
 
 
-function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
+function [outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   import MinHeap
   T = 2^(M)-1; % avoid the last value to 0
   
@@ -73,26 +77,26 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   global gzs;
   gzs  = zeros(1,T); % <G , Z>
   % output variable
-  global regrets;
-  regrets = zeros(1,T);
+%   global regrets;
+   regrets = zeros(1,T);
  
-  global experts;
-  experts = zeros(1,T);
-  global expertsRewards;
-  expertsRewards = zeros(1,T);
+%   global experts;
+%   experts = zeros(1,T);
+%   global expertsRewards;
+%   expertsRewards = zeros(1,T);
   global myChoices;
   myChoices = zeros(1,T);
-  global myRewards;
-  myRewards = zeros(1,T);
+%   global myRewards;
+%   myRewards = zeros(1,T);
   
   % the initial y
   global y0;
   y1 = y0;
 
   
-  global feedbackHeap;
-  feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
-  feedbackHeap.ExtractMin();
+%   global feedbackHeap;
+%   feedbackHeap = MinHeap(T+1,ones(1,4)* inf);
+%   feedbackHeap.ExtractMin();
 
   %%%%%%%%%%%%%%%%%%
   % main function  %
@@ -110,21 +114,21 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   [outRegrets]= iteration(1,T,y1,false,type);
   
   fprintf('End Loop\n');
-  headline = sprintf('LOGD %s Delay Choice',type);
-  imgXCompare = figure('name',headline,'NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
-  
-  plot(experts,'DisplayName','experts','LineWidth',1);
-  hold on;
-  plot(myChoices,'DisplayName','mychoice','LineWidth',1);
-  legh  = legend('experts','mychoice');
-  legh.FontSize = 16;
-  title(headline,'FontSize',20,'FontWeight','normal');
-  hold off;
-  
-  headline = sprintf('LOGD %s Delay Regret',type);
-  imgRegret = figure('name',headline,'NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
-  plot(outRegrets,'DisplayName','regrets','LineWidth',1);
-  title(headline,'FontSize',20,'FontWeight','normal');
+%   headline = sprintf('LOGD %s Delay Choice',type);
+%   imgXCompare = figure('name',headline,'NumberTitle','off','Position',[0,500,700,500],'visible',figConfig);
+%   
+% %   plot(experts,'DisplayName','experts','LineWidth',1);
+%   hold on;
+%   plot(myChoices,'DisplayName','mychoice','LineWidth',1);
+%   legh  = legend('experts','mychoice');
+%   legh.FontSize = 16;
+%   title(headline,'FontSize',20,'FontWeight','normal');
+%   hold off;
+%   
+%   headline = sprintf('LOGD %s Delay Regret',type);
+%   imgRegret = figure('name',headline,'NumberTitle','off','Position',[700,500,700,500],'visible',figConfig);
+%   plot(outRegrets,'DisplayName','regrets','LineWidth',1);
+%   title(headline,'FontSize',20,'FontWeight','normal');
 
  
   
@@ -141,7 +145,7 @@ function [outRegrets,outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   %saveas(imgRegret,strcat('img/',img_path,type,'_regret'),'png');
   % saveas(imgRewardCompare,strcat('img/','type','_reward'),'png');
   outMyChoices =myChoices;
-  outRegrets = regrets;
+%   outRegrets = regrets;
   %%%%%%%end%%%%%%%%
   
 end
@@ -162,7 +166,7 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
   global myRewards;
   global expertsRewards;
   global feedbackHeap;
-
+  global theta;
   y = y1;
   
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
@@ -174,75 +178,64 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     
       gz =50;
     % y_1
-    y = y - 1/100*gradients(z_t,gz);
+    y = y - 1/theta*gradients(z_t,gz);
   % gzs(1:end) = rand(1,t_e)* D;
    gzs(1:end) = ones(1,t_e)*50;
    
     feedBackSum = gradients(z_t,gz);
-%
-feedBackSum=0;
     feedBackCountLast = 1;
     feedBackCount = 0;
   end
-  
+   
   % from 1
   for t = t_b : t_e
     % generate delayed feedback
     %  generate feedback dela
     
     % update x
-    gDelayedFeedBack(B,step,t,feedbackHeap,type);
+    % gDelayedFeedBack(B,step,t,feedbackHeap,type);
     
     myChoices(t) = project(y,x_bound);
-    u=updateExpert(experts,t,t,gzs);
-    experts(t)= project(u,x_bound);
-    expertsRewards(t)=expertLoss(experts(t),gzs,t);
+%     u=updateExpert(experts,t,t,gzs);
+%     experts(t)= project(u,x_bound);
+%     expertsRewards(t)=expertLoss(experts(t),gzs,t);
     
-    if t == 1
-      myRewards(t) = userLoss(myChoices(t),gzs(t));
-    else
-      myRewards(t) = myRewards(t-1) + userLoss(myChoices(t),gzs(t));
+%     if t == 1
+%       myRewards(t) = userLoss(myChoices(t),gzs(t));
+%     else
+%       myRewards(t) = myRewards(t-1) + userLoss(myChoices(t),gzs(t));
+%     end
+    
+    
+    
+    [feedBackTime,originTime] = getFeedBack(t,type);
+    
+    if feedBackTime - 1  == t
+      % clean
+      feedBackCountLast = 0; % void div 0
+      feedBackSum = 0;
+      % get all feedbacks
+      feedBackCount = feedBackCount + 1;
+      % count feedback loss function
+      %gzs(feedBackCount) = gz;
+      % update y + 1
+      feedBackCountLast = feedBackCountLast + 1;
+%       choiceTime = countChoiceTime(t,type);
+      feedBackSum = feedBackSum + gradients(myChoices(originTime),gz);
+      
+      %myRewards(t) = myRewards(t) + reward;
+      theta = originTime+theta;
+      
     end
-    
-    
-    if feedbackHeap.Count()
-      % check delay
-      out = num2cell(feedbackHeap.ReturnMin());
-      [feedBackTime,gz,gradient,reward] = out{:};
-      if feedBackTime - 1  == t
-        % clean
-        feedBackCountLast = 0; % void div 0
-        feedBackSum = 0;
-        % get all feedbacks
-        while feedbackHeap.Count() > 0
-          out = num2cell(feedbackHeap.ReturnMin());
-          [feedBackTime,choiceTime,~,~] = out{:};
-          
-          if feedBackTime - 1 > t
-            break;
-          else
-            feedBackCount = feedBackCount + 1;
-            out = num2cell(feedbackHeap.ExtractMin());
-            [~,choiceTime,~,~] = out{:};
-            
-            % count feedback loss function
-            %gzs(feedBackCount) = gz;
-            % update y + 1
-            feedBackCountLast = feedBackCountLast + 1;
-            feedBackSum = feedBackSum + gradients(myChoices(choiceTime),gzs(choiceTime));
-            
-            %myRewards(t) = myRewards(t) + reward;
-          end
-        end
-      end
-    end
+   
+ 
     if doubling_flag
       eta1 = t_b+1;
     else
-      eta1 = t+100;
+      eta1 = t+theta;
     end
     y = y - (1 / eta1) * 1/feedBackCountLast* feedBackSum;
-    regrets(t) = myRewards(t) - expertsRewards(t);
+%     regrets(t) = myRewards(t) - expertsRewards(t);
     
   end
 
@@ -347,34 +340,64 @@ function gDelayedFeedBack(B,step,t,feedbackHeap,type)
   feedbackHeap.InsertKey([feedBackTime,t,gradient,reward]);
 end
 
-function out = doubling(M)
-  global regrets_div_t;
-  global experts;
-  global myChoices;
-  global regrets;
-  
-  %rng('shuffle');
-  rng(1);
-  for m = 1 : M
-    iteration(2^(m-1),2^(m)-1,true);
+function [feedBackTime,originTime] = getFeedBack(t,type)
+  switch lower(type)
+    case 'linear'
+      [originTime] =  t/50;
+    case 'log'
+      global log_bound;
+      for i = floor(log2(t)):log_bound
+        if t ==1
+           originTime = t;
+           break;
+        elseif i*ceil(log2(i)) + i== t
+          originTime = i;
+           break;
+        else
+          originTime = 0.1;
+        end
+      end
+    case 'square'
+      [originTime] = sqrt(t);
+    case 'exp'
+      [originTime] = log2(t);
+    otherwise
+      error('Delay type err');
   end
-  
-  % regret_s=ogddoublingtrick(M-1);
-  
-  figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
-  plot(experts,'DisplayName','experts');
-  hold on;
-  plot(myChoices,'DisplayName','mychoice');
-  legend('experts','mychoice');
-  hold off;
-  figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
-  hold on;
-  % plot(regret_s'+ones(1,size(regret_s,1))*89);
-  plot(regrets);
-  hold off;
-  
-  % diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
-  figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
-  plot(regrets_div_t);
-  out = regrets;
+  if ceil(originTime) == originTime
+    feedBackTime = t + 1;
+  else
+    feedBackTime = t - 1;
+  end
 end
+% function out = doubling(M)
+%   global regrets_div_t;
+%   global experts;
+%   global myChoices;
+%   global regrets;
+%   
+%   %rng('shuffle');
+%   rng(1);
+%   for m = 1 : M
+%     iteration(2^(m-1),2^(m)-1,true);
+%   end
+%   
+%   % regret_s=ogddoublingtrick(M-1);
+%   
+%   figure('name','The value of Xt','NumberTitle','off','Position',[0,500,700,500]);
+%   plot(experts,'DisplayName','experts');
+%   hold on;
+%   plot(myChoices,'DisplayName','mychoice');
+%   legend('experts','mychoice');
+%   hold off;
+%   figure('name','The aluve of regret','NumberTitle','off','Position',[700,500,700,500]);
+%   hold on;
+%   % plot(regret_s'+ones(1,size(regret_s,1))*89);
+%   plot(regrets);
+%   hold off;
+%   
+%   % diff(1:end) = regrets -(regret_s'-ones(1,size(regret_s,1))*89);
+%   figure('name','Regret div t','NumberTitle','off','Position',[700,0,700,500]);
+%   plot(regrets_div_t);
+%   out = regrets;
+% end
