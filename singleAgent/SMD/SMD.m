@@ -7,7 +7,7 @@ T = 2^(M)-1; % avoid the last value to 0
 
 global x_bound;
 x_bound = [0,1;0,2*pi];
-y0 = [2,8/6*pi];
+y0 = [1.5,3*pi];
 % D and eta are used in reward function U
 global eta;
 eta = 1;
