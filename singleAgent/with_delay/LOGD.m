@@ -168,10 +168,12 @@ function[outRegrets]=iteration(t_b,t_e,y1,doubling_flag,type)
     % t = 0
     % z_0
     z_t = project(y1,x_bound);
-    gz =rand(1)*D;
+    %  gz =rand(1)*D;
+    gz =50;
     % y_1
-    y = y - gradients(z_t,gz);
-    gzs(1:end) = rand(1,t_e)* D;
+    y = y - 1/100*gradients(z_t,gz);
+   %gzs(1:end) = rand(1,t_e)* D;
+   gzs(1:end) = ones(1,t_e)*50;
   end
   
   % from 1
@@ -201,7 +203,7 @@ function[outRegrets]=iteration(t_b,t_e,y1,doubling_flag,type)
         if doubling_flag
           eta1 = t_b+1;
         else
-          eta1 = t+1;
+          eta1 = t+100;
         end
         % get all feedbacks
         while feedbackHeap.Count() > 0

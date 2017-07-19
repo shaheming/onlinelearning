@@ -14,7 +14,7 @@ function  InjectionLOGD( M )
   global step;
   step = 5;
   global y0;
-  y0 =8;
+  y0 =32;
   
   global x_bound;
   x_bound = [0,1000];
@@ -23,7 +23,8 @@ function  InjectionLOGD( M )
   D = 100;
   
   isDraw = false;
-  types = {'nodelay','bound','linear','log','square','exp','step'};
+%   types = {'nodelay','bound','linear','log','square','exp','step'};
+   types = {'linear','log','square'};
   regrets = {size(types,2)};
   index = 0;
   for i = types
@@ -169,12 +170,17 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
   if t_b == 1
     % t = 0
     z_t = project(y1,x_bound);
-    gz =rand(1)*D;
-    y = y - gradients(z_t,gz);
-    gzs(1:end) = rand(1,t_e)*D;
+
+    
+      gz =50;
+    % y_1
+    y = y - 1/100*gradients(z_t,gz);
+  % gzs(1:end) = rand(1,t_e)* D;
+   gzs(1:end) = ones(1,t_e)*50;
    
     feedBackSum = gradients(z_t,gz);
-%   feedBackSum=0;
+%
+feedBackSum=0;
     feedBackCountLast = 1;
     feedBackCount = 0;
   end
@@ -233,10 +239,11 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     if doubling_flag
       eta1 = t_b+1;
     else
-      eta1 = t+1;
+      eta1 = t+100;
     end
     y = y - (1 / eta1) * 1/feedBackCountLast* feedBackSum;
     regrets(t) = myRewards(t) - expertsRewards(t);
+    
   end
 
 
@@ -322,7 +329,7 @@ function gDelayedFeedBack(B,step,t,feedbackHeap,type)
     case 'bound'
       [feedBackTime] = boundDelay(t,B);
     case 'linear'
-      [feedBackTime] =  linearDelay(t,1);
+      [feedBackTime] =  linearDelay(t,50);
     case 'log'
       [feedBackTime] = logDelay(t);
     case 'square'
