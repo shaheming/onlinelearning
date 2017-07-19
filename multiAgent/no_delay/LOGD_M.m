@@ -12,9 +12,7 @@ function out = LOGD_M(M)
   global eta;
   eta = 1;
   N = 5;
-  global myChoices;
-  myChoices = zeros(T,2);
-  
+
   
   %%%%%%%%%%%%%%%%%%
   % main function  %
@@ -33,7 +31,6 @@ end
 
 function  OGD_Primary(T,y0,N)
   
-  global myChoices;
   mkdir img;
   
   disp('Begin Loop');
@@ -43,23 +40,23 @@ function  OGD_Primary(T,y0,N)
   %%%end
   disp('End Loop');
  
-  regFig = figure('name','LOGD-MULTIAGENT','NumberTitle','off');
+  xFig = figure('name','LOGD-MULTIAGENT','NumberTitle','off');
+  set(xFig,'position',get(0,'screensize'));
   hold on;
   
-  plot(choices,'DisplayName',char(i{1}{3}),'LineWidth',1.5);
-  hold on;
-  shading interp
-  Z=zeros(1,T);
-  for i = 1:T
-    Z(i) = userCost(myChoices(i,:));
+  for i = 1:N
+    lineName{i} =sprintf('Agent: %d',i);
   end
   
-  Z = ones(1,T)*4;
+  plot(choices,'DisplayName',char(lineName),'LineWidth',1.5);
+  hold on;
   
-
+  legh  =legend(lineName,'Location','best','EdgeColor','w');
+  legh.LineWidth = 2;
+  legh.FontSize = 20;
   hold off;
-  xFigName = sprintf('%s-%s-r0=%.3f-theta=%.3fend','SGD','X',y0(1),y0(2));
-  saveas(regFig,strcat('img/',xFigName),'png');
+  xFigName = sprintf('%s-%s','LOGD_M','X');
+  saveas(xFig,strcat('img/',xFigName),'png');
   
 end
 
@@ -83,7 +80,7 @@ function outChoices=iteration(t_b,t_e,y0,N)
   if t_b == 1
     x_0 = project(y0,x_bound,N);
     %x0 feedback
-    y = y0 - 1*gradient(x_0,G,r_start,eta)
+    y = y0 - 1*gradient(x_0,G,r_start,eta);
   end
   
   for t = t_b : t_e
