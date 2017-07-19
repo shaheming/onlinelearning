@@ -99,7 +99,7 @@ function iteration(t_b,t_e,y0,doubling_flag)
     if doubling_flag 
       eta1 = t_b+1; 
     else
-      eta1 = t + 10;
+      eta1 = t + 1;
     end
     
     % get x_t
@@ -122,8 +122,8 @@ function outX = gradient(x)
   theta = x(2);
   
 
-  outX(1) = (3+ sin(5*theta) + cos(3*theta))*(10/3 * r - 3 * r^2);
-  outX(2) =(5*cos(5*theta) - 3*sin(3*theta))*r^2*(5/3 - r);
+  outX(1) = (3+ sin(5*theta) + cos(3*theta))*(10/3 * r - 3 * r^2)+ rand(1);
+  outX(2) =(5*cos(5*theta) - 3*sin(3*theta))*r^2*(5/3 - r)+rand(1)*2*pi;
 end
 
 % the reward function U
