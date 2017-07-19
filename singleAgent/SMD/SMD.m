@@ -7,7 +7,7 @@ T = 2^(M)-1; % avoid the last value to 0
 
 global x_bound;
 x_bound = [0,1;0,2*pi];
-y0 = [1.5,3*pi];
+y0 = [5,3*pi];
 % D and eta are used in reward function U
 global eta;
 eta = 1;
@@ -67,7 +67,7 @@ function  OGD_Primary(T,y0,isDraw)
    plot3(r.*cos(theta),r.*sin(theta),Z,'Color','r');
    hold off;
    
-   xFigName = sprintf('%s-%s-r0=%.3f-theta=%.3fend','SGD','X',y0(1),y0(2));
+   xFigName = sprintf('%s-%s-r0=%d-theta=%d','SGD','X',y0(1),y0(2));
    saveas(regFig,strcat('img/',xFigName),'png');
 
 end
@@ -122,8 +122,8 @@ function outX = gradient(x)
   theta = x(2);
   
 
-  outX(1) = (3+ sin(5*theta) + cos(3*theta))*(10/3 * r - 3 * r^2)+ rand(1);
-  outX(2) =(5*cos(5*theta) - 3*sin(3*theta))*r^2*(5/3 - r)+rand(1)*2*pi;
+  outX(1) = (3+ sin(5*theta) + cos(3*theta))*(10/3 * r - 3 * r^2)+ rand(1)-0.5;
+  outX(2) =(5*cos(5*theta) - 3*sin(3*theta))*r^2*(5/3 - r)+rand(1)*2*pi -pi;
 end
 
 % the reward function U
