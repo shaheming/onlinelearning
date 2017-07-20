@@ -41,7 +41,7 @@
  p = p*PT;
  %end
 
-
+G=lognrnd(mu,[1,1;1,1]);
 
  
 

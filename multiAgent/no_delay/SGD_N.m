@@ -20,7 +20,8 @@ function out = SGD_N(M)
   
   %%%%%%%end%%%%%%%%
   
-  
+  pause(5);
+  close all;
 end
 
 
@@ -207,9 +208,11 @@ function  [G,ETA,outP] = logNormal(G1,G2,ETA1,ETA2,p)
   ETA_E = 0.25 * ETA1 + 0.75*ETA2;
   G_E = 0.25 * G1 + 0.75*G2;
   %log normal G
-  G=lognrnd(G_E,[1,1;1,1]);
+  mu=log(G_E)-1/2*ones(size(G_E));
+  G=lognrnd(mu,[1,1;1,1]);
   %log normal eta
-  ETA = lognrnd(ETA_E,[1;1]);
+  mu=log(ETA_E)-1/2*ones(size(ETA_E));
+  ETA = lognrnd(mu,[1;1]);
   outP = p;
 end
 
