@@ -7,9 +7,9 @@ function  InjectionLOGD( M )
   img_path ='injectionLOGD';
   algorithmName = 'injectionLOGD';
   global y0;
-  y0 =51;
+  y0 =52;
   global theta;
-  theta =15;
+  theta =2;
   regretsFigName = sprintf('%s-%s',algorithmName,'Regrets');
   xFigName = sprintf('%s-%s-y0=%d-theta=%d-times-%d',algorithmName,'X',y0,theta,M);
   
@@ -27,8 +27,8 @@ function  InjectionLOGD( M )
   
   isDraw = false;
   %   types = {'nodelay','bound','linear','log','square','exp','step'};
-%   types = {'log','square','linear'};
-  types = {'log'};
+   types = {'log','square','linear'};
+  %types = {'log'};
   %   regrets = {size(types,2)};
   index = 0;
   for i = types
@@ -45,12 +45,17 @@ function  InjectionLOGD( M )
     plot(i{1}{1},'DisplayName',char(i{1}{2}),'LineWidth',1.5);
     hold on;
   end
+  algorithmName = 'StepSizeLOGD';
+  headLine=sprintf('%s eta=t+%d y0=%d iteration=2**%d-1',algorithmName,theta,y0,M);
+  title(headLine,'FontSize',20,'FontWeight','normal');
+  hold on;
+  
   legh  =legend(types,'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;
-  
-  saveas(cFig,strcat('img/',xFigName),'png');
+   headLine=sprintf('%s eta=t+%d y0=%d iteration=2exp%d-1',algorithmName,theta,y0,M);
+  saveas(cFig,strcat('img/',headLine),'png');
 end
 
 
@@ -112,7 +117,7 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     y = y - 1/theta*gradients(z_t,gz);
     % gzs(1:end) = rand(1,t_e)* D;
     gzs(1:end) = ones(1,t_e)*50;
-    
+    eta1 = theta;
     feedBackSum = gradients(z_t,gz);
     feedBackCountLast = 1;
     feedBackCount = 0;
@@ -128,7 +133,7 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     
     % update x
     % gDelayedFeedBack(B,step,t,feedbackHeap,type);
-    
+     feedBackSum = 0;
     myChoices(t) = project(y,x_bound);
     
 %     [feedBackTime,originTime] = getFeedBack(t,type);
@@ -146,15 +151,12 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
       % originTime is the time the delay genrate
       feedBackSum = feedBackSum + gradients(myChoices(originTime),gz);
       originTime = originTime + 1;
+      eta1 = eta1+1;
     end
     
     
-    if doubling_flag
-      eta1 = t_b+1;
-    else
-      eta1 = t+theta;
-    end
     y = y - (1 / eta1) * 1/feedBackCountLast* feedBackSum;
+   
   end
   outY = y;
 end
