@@ -5,11 +5,14 @@
  ETA1=[0.1;0.2];
  ETA2=[0.15;0.05];
  ETA_E = 0.25 * ETA1 + 0.75*ETA2;
- 
+
  %binornd
  output = binornd(1,0.25);
  outputs =[output,1-output];
  G_O =  G1*outputs(1)+G2*outputsp(2);
+ output = binornd(1,0.25);
+ outputs =[output,1-output];
+ ETA_O = ETA1*outputs(1)+ETA2*outputsp(2);
  
  %log normal G
  G=lognrnd(G_E,[1,1;1,1]);

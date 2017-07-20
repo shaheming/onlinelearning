@@ -1,25 +1,22 @@
-function out = SGD_M(M)
-  %use doubling tricking to iterate
-  % M = 18; % 2 ^ 15 = 32768
+function out = SGD_N(M)
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
-  % T = 50000;
   mkdir img;
-  global x_bound;
-  x_bound = [0,1;0,2*pi];
-  y0 = [0,0,0,0];
-  % D and eta are used in reward function U
-  global eta;
-  eta = 1;
-  N = 4;
   
-  algorithmName = 'SGD_M-MULTIAGENT';
+  y0 = [0,0];
+  % D and eta are used in reward function U
+  N = size(y0,2);
+
+  algorithmName = 'SGD-MULTIAGENT-NOIOSE';
   
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
   %rng(2);
-  OGD_Primary(T,y0,N,algorithmName);
+  types = {'Bernoulli','Log-normal','Markovian'};
+  for i = types
+    OGD_Primary(T,y0,N,algorithmName,i);
+  end
   
   %%%%%%%end%%%%%%%%
   
@@ -28,109 +25,126 @@ end
 
 
 
-function  OGD_Primary(T,y0,N,algorithmName)
+function  OGD_Primary(T,y0,N,algorithmName,type)
   
-  fprintf('Begin Loop\n');
+  fprintf('Begin Loop of %s dsitribution\n',char(type));
   fprintf('Iterate %d turns\n',T);
   
-  y0 = [0,0,0,0];
+  y0 = [0,0];
   %%%iteration begin
-  choices_1=iteration(1,T,y0,N);
+  choices_1=iteration(1,T,y0,N,char(type));
   
   %%best choice
-  y0_1=[0.016815,0.023363,0.031101, 0.016220];
-  choices_2=iteration(1,T,y0_1,N);
+  y0_1=[0.06125,0.05125];
+%  choices_2=iteration(1,T,y0_1,N,char(type));
+  choices_2 = ones(T,2).*y0_1;
+  fprintf('End Loop\n');
   
-  fprintf('End Loop');
- 
-
+  
   
   for i = 1:2:N*2
     lineName{i} =sprintf('p:%d',(i+1)/2);
-    lineName{i+1} =sprintf('p%d*',(i+1)/2);
+    lineName{i+1} =sprintf('p:%d*',(i+1)/2);
   end
   
-  xFig = figure('name',algorithmName,'NumberTitle','off');
+  xFigName = sprintf('%s-%s-%s-%s',algorithmName,char(type),'Link-1','X');
+
+  xFig = figure('name',xFigName,'NumberTitle','off');
   set(xFig,'position',get(0,'screensize'));
   hold on;
-  matrix1=[y0(1),y0_1(1),y0(2),y0_1(2);choices_1(:,1),choices_2(:,1),choices_1(:,2),choices_2(:,2)];
+  matrix1=[y0(1),y0_1(1);choices_1(:,1),choices_2(:,1)];
   
-  plot(matrix1(:,1),'-o','DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+  plot(matrix1(:,1),'-.','DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
   plot(matrix1(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
-  hold on;
-  plot(matrix1(:,3),'-o','DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
-  hold on;
-  plot(matrix1(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
+  %   hold on;
+  %   plot(matrix1(:,3),'-o','DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  %   hold on;
+  %   plot(matrix1(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
   
   hold on;
-  legh  =legend(lineName{1:N},'Location','best','EdgeColor','w');
+  
+
+  title(xFigName,'FontSize',20,'FontWeight','normal');
+  hold on;
+  legh  =legend(lineName(1:N),'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;
+  saveas(xFig,strcat('img/',xFigName),'png');
   
-  matrix2=[y0(3),y0_1(3),y0(4),y0_1(4);choices_1(:,3),choices_2(:,3),choices_1(:,4),choices_2(:,4)];
+  
+  matrix2=[y0(2),y0_1(2);choices_1(:,2),choices_2(:,2)];
+  
+  xFigName = sprintf('%s-%s-%s-%s',algorithmName,char(type),'Link-2','X');
 
   xFig_1 = figure('name','LOGD-MULTIAGENT','NumberTitle','off');
   set(xFig_1,'position',get(0,'screensize'));
   hold on;
-% plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
-  plot(matrix2(:,1),'-o','DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+  % plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
+  plot(matrix2(:,1),'-.','DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
   plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
   hold on;
-  plot(matrix2(:,3),'-o','DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  %   plot(matrix2(:,3),'-o','DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  %   hold on;
+  %   plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
+  %   hold on;
+  title(xFigName,'FontSize',20,'FontWeight','normal');
   hold on;
-  plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
-  hold on;
-  legh  =legend(lineName{N+1:end},'Location','best','EdgeColor','w');
+  legh  =legend(lineName(N+1:end),'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;
-    
   
-  xFigName = sprintf('%s-%s','SGD_M-Link-1-2','X');
-  saveas(xFig,strcat('img/',xFigName),'png');
-  xFigName = sprintf('%s-%s','SGD_M-Link-3-4','X');
   saveas(xFig_1,strcat('img/',xFigName),'png');
   
 end
 
 
-function outChoices=iteration(t_b,t_e,y0,N)
+function outChoices=iteration(t_b,t_e,y0,N,type)
   
   global x_bound;
   
+  %probability of ETA and G
+  p=[1/4,3/4];
   
-  G = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
-  eta = [0.1;0.2;0.3;0.1];
+  
+  G1=[1,3;3,1];
+  G2=[2,1;1,2];
+  
+  ETA1=[0.1;0.2];
+  ETA2=[0.15;0.05];
 
-  r_start = [0.5,0.5,0.5,0.5];
+  PT=[2/5,3/5;1/5,4/5];
+  
+  r_start = ones(1,N)*0.5;
+  
   for i = 1:N
     x_bound(i,1) = 0;
-    x_bound(i,2) = 0.04;
+    x_bound(i,2) = 10^4;
   end
   
   choices=zeros(t_e,N);
- 
-% 
-  % start at 0 OMG this is a serious problem !!! because in matlab for i =
-  % i = 1:1 will iterate
+  
   if t_b == 1
     x_0 = project(y0,x_bound,N);
     %x0 feedback
-    y = y0 - 1*gradient(x_0,G,r_start,eta);
+    [G,ETA,p] = stochasticFunct(G1,G2,ETA1,ETA2,p,PT,type);
+     
+    y = y0 - 1*gradient(x_0,G,r_start,ETA);
   end
   
   for t = t_b : t_e
     %Z(1:end) = D * rand(size(Z,1),1);
     % thetas(t) = G(2:end) * Z;
     % my choice
-    eta1 = t +1;
+    eta1 = t + 1;
     %x
     choices(t,:) = project(y,x_bound,N);
     %y
-    y = y - (1 / eta1)*gradient(choices(t,:),G,r_start,eta);
+   [G,ETA,p] = stochasticFunct(G1,G2,ETA1,ETA2,p,PT,type);
+    y = y - (1 / eta1)*gradient(choices(t,:),G,r_start,ETA);
   end
   outChoices = choices;
   
@@ -162,5 +176,58 @@ function x_t = project(y_t,x_bound,N)
   end
 end
 
+% types = {'Bernoulli','Log-normal','Markovian'};
+function   [G,ETA,p] = stochasticFunct(G1,G2,ETA1,ETA2,p,PT,type)
+  switch type
+    case 'Bernoulli'
+      [G,ETA,p] = bernoulli(G1,G2,ETA1,ETA2,p);
+    case 'Log-normal'
+      [G,ETA,p] = logNormal(G1,G2,ETA1,ETA2,p);
+    case 'Markovian'
+      [G,ETA,p] =  markovian(G1,G2,ETA1,ETA2,p,PT);
+    otherwise
+      error('Delay type err');
+  end
+  
+end
 
+function  [G,ETA,outP] = bernoulli(G1,G2,ETA1,ETA2,p)
+  
+  output = binornd(1,0.25);
+  outputs =[output,1-output];
+  G =  G1*outputs(1)+G2*outputs(2);
+  output = binornd(1,0.25);
+  outputs =[output,1-output];
+  ETA = ETA1*outputs(1)+ETA2*outputs(2);
+  outP = p;
+  
+end
+
+function  [G,ETA,outP] = logNormal(G1,G2,ETA1,ETA2,p)
+  ETA_E = 0.25 * ETA1 + 0.75*ETA2;
+  G_E = 0.25 * G1 + 0.75*G2;
+  %log normal G
+  G=lognrnd(G_E,[1,1;1,1]);
+  %log normal eta
+  ETA = lognrnd(ETA_E,[1;1]);
+  outP = p;
+end
+
+function [G,ETA,outP] =  markovian(G1,G2,ETA1,ETA2,p,PT)
+ s1={G1,ETA1};
+ s2={G2,ETA2};
+ S = {s1,s2};
+ %begain
+ output=binornd(1,p(1));
+ outputs =[output,1-output];
+ if outputs(1) == 1
+   s= S{1};
+ else
+   s=S{2};
+ end
+ G = s{1};
+ ETA = s{2};
+ %update probility
+ outP = p*PT;
+end
 
