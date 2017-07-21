@@ -6,8 +6,7 @@ function out = SGD_N(M)
   y0 = [0,0];
   % D and eta are used in reward function U
   N = size(y0,2);
-
-  algorithmName = 'SGD-MULTIAGENT-NOIOSE';
+   algorithmName = 'SGD-MULTIAGENT-NOIOSE';
   
   %%%%%%%%%%%%%%%%%%
   % main function  %

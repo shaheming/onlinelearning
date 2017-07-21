@@ -1,25 +1,40 @@
 function out = LOGD_M(M)
   %use doubling tricking to iterate
   % M = 18; % 2 ^ 15 = 32768
+   mkdir img LOGD_M;
+   
+  global img_path;
+  img_path ='LOGD_M/';
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   % T = 50000;
-  
-  global x_bound;
-  x_bound = [0,1;0,2*pi];
-  y0 = [0,0,0,0];
-  % D and eta are used in reward function U
   global eta;
   eta = 1;
   N = 4;
+  global x_bound;
 
+  for i = 1:N
+    x_bound(i,1) = 0;
+    x_bound(i,2) = 10^4;
+  end
+
+
+  y0 = [0,0,0,0];
+  % D and eta are used in reward function U
+
+  global updateP;
+  updateP = [1/5,1/5,1/5,1/5];
+  global xFigName_1;
+  global xFigName_2;
+  xFigName_1 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-1-2','X',updateP(1),updateP(2));
+  xFigName_2 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-3-4','X',updateP(3),updateP(4));
   
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
   
   
-  %    rng(2);
+  rng(2);
   OGD_Primary(T,y0,N);
   
   %%%%%%%end%%%%%%%%
@@ -31,7 +46,7 @@ end
 
 function  OGD_Primary(T,y0,N)
   
-  mkdir img;
+ 
   
   disp('Begin Loop');
   fprintf('Iterate %d turns',T);
@@ -43,7 +58,9 @@ function  OGD_Primary(T,y0,N)
   choices_2=iteration(1,T,y0_1,N);
   
   disp('End Loop');
- 
+  
+  global xFigName_1;
+  global xFigName_2;
 
   
   for i = 1:2:N*2
@@ -51,49 +68,51 @@ function  OGD_Primary(T,y0,N)
     lineName{i+1} =sprintf('p%d*',(i+1)/2);
   end
   
-  xFig = figure('name','LOGD-MULTIAGENT','NumberTitle','off');
+  xFig = figure('name',xFigName_1,'NumberTitle','off');
   set(xFig,'position',get(0,'screensize'));
   hold on;
   matrix1=[y0(1),y0_1(1),y0(2),y0_1(2);choices_1(:,1),choices_2(:,1),choices_1(:,2),choices_2(:,2)];
   
-  plot(matrix1(:,1),'-o','DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+  plot(matrix1(:,1),'-o','MarkerSize',3,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
   plot(matrix1(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
   hold on;
-  plot(matrix1(:,3),'-o','DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  plot(matrix1(:,3),'-o','MarkerSize',3,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
   hold on;
   plot(matrix1(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
   
   hold on;
-  legh  =legend(lineName{1:N},'Location','best','EdgeColor','w');
+  legh  =legend(lineName(1:N),'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
+  title(xFigName_1,'FontSize',20,'FontWeight','normal');
   hold off;
   
   matrix2=[y0(3),y0_1(3),y0(4),y0_1(4);choices_1(:,3),choices_2(:,3),choices_1(:,4),choices_2(:,4)];
 
-  xFig_1 = figure('name','LOGD-MULTIAGENT','NumberTitle','off');
+  xFig_1 = figure('name',xFigName_2,'NumberTitle','off');
   set(xFig_1,'position',get(0,'screensize'));
   hold on;
 %   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
-  plot(matrix2(:,1),'-o','DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+  plot(matrix2(:,1),'-o','MarkerSize',3,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
   plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
   hold on;
-  plot(matrix2(:,3),'-o','DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  plot(matrix2(:,3),'-o','MarkerSize',3,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
   hold on;
   plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
   hold on;
-  legh  =legend(lineName{N+1:end},'Location','best','EdgeColor','w');
+  legh  =legend(lineName(N+1:end),'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
+  title(xFigName_2,'FontSize',20,'FontWeight','normal');
   hold off;
-    
-  
-  xFigName = sprintf('%s-%s','LOGD_M-Link-1-2','X');
-  saveas(xFig,strcat('img/',xFigName),'png');
-  xFigName = sprintf('%s-%s','LOGD_M-Link-3-4','X');
-  saveas(xFig_1,strcat('img/',xFigName),'png');
+  global img_path;
+
+  xFigName_1 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-1-2','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
+  xFigName_2 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-3-4','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
+  saveas(xFig,strcat('img/',xFigName_1),'png');
+  saveas(xFig_1,strcat('img/',xFigName_2),'png');
   
 end
 
@@ -101,16 +120,13 @@ end
 function outChoices=iteration(t_b,t_e,y0,N)
   
   global x_bound;
-  
-  
+  global updateP;
+
   G = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   eta = [0.1;0.2;0.3;0.1];
 
   r_start = [0.5,0.5,0.5,0.5];
-  for i = 1:N
-    x_bound(i,1) = 0;
-    x_bound(i,2) = 10^4;
-  end
+
   
   choices=zeros(t_e,N);
  
@@ -131,7 +147,8 @@ function outChoices=iteration(t_b,t_e,y0,N)
     %x
     choices(t,:) = project(y,x_bound,N);
     %y
-    y = y - (1 / eta1)*gradient(choices(t,:),G,r_start,eta);
+    gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,r_start,eta);
+    y = y - (1 / eta1)*gradientTmp;
   end
   outChoices = choices;
   
