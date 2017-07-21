@@ -13,8 +13,10 @@ function out = SGD_N(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   %rng(2);
-  types = {'Bernoulli','Log-normal','Markovian'};
+   types = {'Bernoulli','Log-normal','Markovian'};
+% types = {'Markovian'};
   for i = types
+    rng(1);
     OGD_Primary(T,y0,N,algorithmName,i);
   end
   
@@ -131,7 +133,8 @@ function outChoices=iteration(t_b,t_e,y0,N,type)
   if t_b == 1
     x_0 = project(y0,x_bound,N);
     %x0 feedback
-    [G,ETA,p] = stochasticFunct(G1,G2,ETA1,ETA2,p,PT,type);
+    
+    [G,ETA,p] = stochasticFunct(G1,G2,ETA1,ETA2,[0,0],PT,type);
      
     y = y0 - 1*gradient(x_0,G,r_start,ETA);
   end
@@ -197,8 +200,8 @@ function  [G,ETA,outP] = bernoulli(G1,G2,ETA1,ETA2,p)
   output = binornd(1,0.25);
   outputs =[output,1-output];
   G =  G1*outputs(1)+G2*outputs(2);
-  output = binornd(1,0.25);
-  outputs =[output,1-output];
+%   output = binornd(1,0.25);
+%   outputs =[output,1-output];
   ETA = ETA1*outputs(1)+ETA2*outputs(2);
   outP = p;
   
@@ -216,13 +219,24 @@ function  [G,ETA,outP] = logNormal(G1,G2,ETA1,ETA2,p)
   outP = p;
 end
 
-function [G,ETA,outP] =  markovian(G1,G2,ETA1,ETA2,p,PT)
+function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,PT)
  s1={G1,ETA1};
  s2={G2,ETA2};
  S = {s1,s2};
+ if lastState ==[0,0]
+   output = binornd(1,0.25);
+   outState =[output,1-output];
+ elseif lastState ==[1,0]
+   output = binornd(1,2/5);
+   outState =[output,1-output];
+ elseif lastState ==[0,1]
+   output = binornd(1,1/5);
+   outState =[output,1-output];
+ end
+ outputs =outState;
  %begain
- output=binornd(1,p(1));
- outputs =[output,1-output];
+ %output=binornd(1,p(1));
+ %outputs =[output,1-output];
  if outputs(1) == 1
    s= S{1};
  else
@@ -231,6 +245,5 @@ function [G,ETA,outP] =  markovian(G1,G2,ETA1,ETA2,p,PT)
  G = s{1};
  ETA = s{2};
  %update probility
- outP = p*PT;
 end
 
