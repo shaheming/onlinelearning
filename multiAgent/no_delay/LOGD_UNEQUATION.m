@@ -1,56 +1,54 @@
 function out = LOGD_UNEQUATION(M)
   %use doubling tricking to iterate
   % M = 18; % 2 ^ 15 = 32768
-   mkdir img LOGD_UNEQUATION;
-   
+  mkdir img LOGD_UNEQUATION;
+  
   global img_path;
   img_path ='LOGD_UNEQUATION/';
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
-  % T = 50000;
+  
   N = 4;
   global x_bound;
-
-  for i = 1:N
-    x_bound(i,1) = 0;
-    x_bound(i,2) = 10^4;
-  end
-
-
+  x_bound = ones(N,2).*[0,10^4];
   y0 = [0,0,0,0];
-  % D and eta are used in reward function U
-
+  
   global updateP;
-  updateP = [1/10,1/10,1/10,1/10];
-%   updateP = [1,1,1,1];
-%   updateP = ones(1,N)*1/8;
-   updateP = [1/10,1/100,1/10,5/10];
-   updateP = [0.311106794085914, 0.413580438050240, 0.00175190075586340 ,0.123968644352259];
+  %  updateP = [1/10 ,1/10,1/10,1/10];
+  %   updateP = [1,1,1,1];
+  %   updateP = ones(1,N)*1/8;
+  %  updateP = [1/10,1/100,1/10,5/10];
+  updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
+  
+  isUseP = true;
+  
   global G;
   global eta;
   global r_start;
   G = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   eta = [0.1;0.2;0.3;0.1];
   r_start = [0.5,0.5,0.5,0.5];
-   
+  
   global xFigName_1;
   global xFigName_2;
   xFigName_1 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-1-2','X',updateP(1),updateP(2));
   xFigName_2 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-3-4','X',updateP(3),updateP(4));
- 
-  q=testUnequation(G,r_start,eta);
-  disp(q);
+  
+  %   q=testUnequation(G,r_start,eta);
+  %   outP = findUnconvergeP(G,r_start,eta);
+  %   if size(outP) ~= size([])
+  %     updateP = outP(1,:);
+  %   end
+  
+  
+  
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
   rng(2);
-  outP = findUnconvergeP(G,r_start,eta);
-  if size(outP) ~= size([])
-    updateP = outP(1,:);
-  end
-    
   
-  OGD_Primary(T,y0,N);
+  
+  OGD_Primary(T,y0,N,isUseP);
   
   %%%%%%%end%%%%%%%%
   
@@ -59,24 +57,24 @@ end
 
 
 
-function  OGD_Primary(T,y0,N)
+function  OGD_Primary(T,y0,N,isUseP)
   
- 
+  
   markersize = 1;
   disp('Begin Loop\n');
   fprintf('Iterate %d turns',T);
-  y0 = [0,0,0,0];
+  
   %%%iteration begin
-  choices_1=iteration(1,T,y0,N);
+  choices_1=iteration(1,T,y0,N,isUseP);
   %%%end
   y0_1=[0.016815,0.023363,0.031101, 0.016220];
-%   choices_2=iteration(1,T,y0_1,N);
+  %   choices_2=iteration(1,T,y0_1,N);
   choices_2=ones(T,N).*y0_1;
   disp('End Loop');
   
   global xFigName_1;
   global xFigName_2;
-
+  
   
   for i = 1:2:N*2
     lineName{i} =sprintf('p:%d',(i+1)/2);
@@ -104,11 +102,11 @@ function  OGD_Primary(T,y0,N)
   hold off;
   
   matrix2=[y0(3),y0_1(3),y0(4),y0_1(4);choices_1(:,3),choices_2(:,3),choices_1(:,4),choices_2(:,4)];
-
+  
   xFig_1 = figure('name',xFigName_2,'NumberTitle','off');
   set(xFig_1,'position',get(0,'screensize'));
   hold on;
-%   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
+  %   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
   plot(matrix2(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
   plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
@@ -123,7 +121,7 @@ function  OGD_Primary(T,y0,N)
   title(xFigName_2,'FontSize',20,'FontWeight','normal');
   hold off;
   global img_path;
-
+  
   xFigName_1 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-1-2','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
   xFigName_2 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-3-4','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
   saveas(xFig,strcat('img/',xFigName_1),'png');
@@ -132,19 +130,19 @@ function  OGD_Primary(T,y0,N)
 end
 
 
-function outChoices=iteration(t_b,t_e,y0,N)
+function outChoices=iteration(t_b,t_e,y0,N,isUseP)
   
   global x_bound;
   global updateP;
   global G;
   global eta;
   global r_start;
-
-
+  
+  
   
   choices=zeros(t_e,N);
- 
-% 
+  
+  %
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -162,8 +160,12 @@ function outChoices=iteration(t_b,t_e,y0,N)
     choices(t,:) = project(y,x_bound,N);
     %y
     gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,r_start,eta);
-    % y = y - (1 / eta1)*gradientTmp./updateP;
+    if isUseP
+      y = y - (1 / eta1)*gradientTmp./updateP;
+    else
       y = y - (1 / eta1)*gradientTmp;
+    end
+    
   end
   outChoices = choices;
   
@@ -198,14 +200,14 @@ end
 
 
 function outX = gradientTest(x,G,r_start,eta)
-  x_best = [0.016815,0.023363,0.031101, 0.016220]; 
+  x_best = [0.016815,0.023363,0.031101, 0.016220];
   outX = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))./diag(G).*(x-x_best)' );
- 
+  
   %*(size(G,1)-1)
 end
 
 function outXP = gradientTestP(x,G,r_start,eta,p)
-  x_best = [0.016815,0.023363,0.031101, 0.016220]; 
+  x_best = [0.016815,0.023363,0.031101, 0.016220];
   outXP = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*(x-x_best)' );
 end
 
@@ -235,7 +237,7 @@ end
 % stem3(xa,x,outX)
 % figure
 % stem3(xa,x,outX)
-% 
+%
 % p = [1/10,1/100,1/10,5/10];
 % outXP =  (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*(x-x_best)' ;
 % outXP = outXP'.*ones(N,4);

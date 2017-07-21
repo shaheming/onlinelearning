@@ -1,12 +1,16 @@
 function out = SGD_N(M)
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
-  mkdir img;
-  
+  mkdir img SGD_N;
+  algorithmName = 'SGD-MULTIAGENT-NOIOSE';
+  global img_path;
+  img_path ='SGD_N/';
   y0 = [0,0];
-  % D and eta are used in reward function U
+  
   N = size(y0,2);
-   algorithmName = 'SGD-MULTIAGENT-NOIOSE';
+  global x_bound;
+  x_bound = ones(N,2).*[0,10^4];
+  
   
   %%%%%%%%%%%%%%%%%%
   % main function  %
@@ -99,6 +103,8 @@ function  OGD_Primary(T,y0,N,algorithmName,type)
   legh.FontSize = 20;
   hold off;
   
+  global img_path;
+  xFigName = sprintf('%s%s-%s-%s-%s',img_path,algorithmName,char(type),'Link-2','X');
   saveas(xFig_1,strcat('img/',xFigName),'png');
   
 end
@@ -121,11 +127,7 @@ function outChoices=iteration(t_b,t_e,y0,N,type)
   PT=[2/5,3/5;1/5,4/5];
   
   r_start = ones(1,N)*0.5;
-  
-  for i = 1:N
-    x_bound(i,1) = 0;
-    x_bound(i,2) = 10^4;
-  end
+ 
   
   choices=zeros(t_e,N);
   

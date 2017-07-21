@@ -1,37 +1,33 @@
 function out = LOGD_M(M)
   %use doubling tricking to iterate
   % M = 18; % 2 ^ 15 = 32768
-   mkdir img LOGD_M;
-   
+  mkdir img LOGD_M;
+  
   global img_path;
   img_path ='LOGD_M/';
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   % T = 50000;
+  y0 = [0,0,0,0];
   N = 4;
   global x_bound;
-
-  for i = 1:N
-    x_bound(i,1) = 0;
-    x_bound(i,2) = 10^4;
-  end
-
-
-  y0 = [0,0,0,0];
-  % D and eta are used in reward function U
-
+  x_bound = ones(N,2).*[0,10^4];
+ 
+  
   global updateP;
-  updateP = [1/10,1/10,1/10,1/10];
-%   updateP = [1,1,1,1];
-%   updateP = ones(1,N)*1/8;
-   updateP = [1/10,1/100,1/10,5/10];
+  %   updateP = [1/10,1/10,1/10,1/10];
+  %   updateP = [1/10,1/100,1/10,5/10];
+  %   updateP = ones(1,N)*1/8;
+  
+  updateP = [1,1,1,1];
+
   global G;
   global eta;
   global r_start;
   G = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   eta = [0.1;0.2;0.3;0.1];
   r_start = [0.5,0.5,0.5,0.5];
-   
+  
   global xFigName_1;
   global xFigName_2;
   xFigName_1 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-1-2','X',updateP(1),updateP(2));
@@ -54,7 +50,7 @@ end
 
 function  OGD_Primary(T,y0,N)
   
- 
+  
   markersize = 1;
   disp('Begin Loop\n');
   fprintf('Iterate %d turns',T);
@@ -63,13 +59,13 @@ function  OGD_Primary(T,y0,N)
   choices_1=iteration(1,T,y0,N);
   %%%end
   y0_1=[0.016815,0.023363,0.031101, 0.016220];
-%   choices_2=iteration(1,T,y0_1,N);
+  %   choices_2=iteration(1,T,y0_1,N);
   choices_2=ones(T,N).*y0_1;
   disp('End Loop');
   
   global xFigName_1;
   global xFigName_2;
-
+  
   
   for i = 1:2:N*2
     lineName{i} =sprintf('p:%d',(i+1)/2);
@@ -97,11 +93,11 @@ function  OGD_Primary(T,y0,N)
   hold off;
   
   matrix2=[y0(3),y0_1(3),y0(4),y0_1(4);choices_1(:,3),choices_2(:,3),choices_1(:,4),choices_2(:,4)];
-
+  
   xFig_1 = figure('name',xFigName_2,'NumberTitle','off');
   set(xFig_1,'position',get(0,'screensize'));
   hold on;
-%   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
+  %   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
   plot(matrix2(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
   plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
@@ -116,7 +112,7 @@ function  OGD_Primary(T,y0,N)
   title(xFigName_2,'FontSize',20,'FontWeight','normal');
   hold off;
   global img_path;
-
+  
   xFigName_1 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-1-2','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
   xFigName_2 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-3-4','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
   saveas(xFig,strcat('img/',xFigName_1),'png');
@@ -132,12 +128,12 @@ function outChoices=iteration(t_b,t_e,y0,N)
   global G;
   global eta;
   global r_start;
-
-
+  
+  
   
   choices=zeros(t_e,N);
- 
-% 
+  
+  %
   % start at 0 OMG this is a serious problem !!! because in matlab for i =
   % i = 1:1 will iterate
   if t_b == 1
@@ -150,13 +146,13 @@ function outChoices=iteration(t_b,t_e,y0,N)
     %Z(1:end) = D * rand(size(Z,1),1);
     % thetas(t) = G(2:end) * Z;
     % my choice
-    eta1 = t +1;
+    eta1 = t + 1;
     %x
     choices(t,:) = project(y,x_bound,N);
     %y
     gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,r_start,eta);
     % y = y - (1 / eta1)*gradientTmp./updateP;
-      y = y - (1 / eta1)*gradientTmp;
+    y = y - (1 / eta1)*gradientTmp;
   end
   outChoices = choices;
   
@@ -191,18 +187,18 @@ end
 
 
 function outX = gradientTest(x,G,r_start,eta)
-  x_best = [0.016815,0.023363,0.031101, 0.016220]; 
+  x_best = [0.016815,0.023363,0.031101, 0.016220];
   outX = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))./diag(G).*[x-x_best]' );
- 
+  
   %*(size(G,1)-1)
 end
 
 function outX = gradientTestP(x,G,r_start,eta,p)
-  x_best = [0.016815,0.023363,0.031101, 0.016220]; 
+  x_best = [0.016815,0.023363,0.031101, 0.016220];
   outX =  (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*[x-x_best]' ;
   disp(outX');
   outX=sum(outX);
   %*(size(G,1)-1)
-   disp(p);
+  disp(p);
 end
 
