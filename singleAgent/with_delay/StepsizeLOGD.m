@@ -1,5 +1,5 @@
 
-function  LOGD( M )
+function  StepsizeLOGD( M )
   % M = 15;
   
   mkdir img injectionLOGD;
@@ -59,8 +59,8 @@ function [outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   global log_bound;
   log_bound = T;
   % your decision domain used in projection
-  global gzs;
-  gzs  = zeros(1,T); % <G , Z>
+%   global gzs;
+%   gzs  = zeros(1,T); % <G , Z>
   
   global myChoices;
   myChoices = zeros(1,T);
@@ -109,7 +109,7 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     % y_1
     y = y - 1/theta*gradients(z_t,gz);
     % gzs(1:end) = rand(1,t_e)* D;
-    gzs(1:end) = ones(1,t_e)*50;
+
     eta1 = theta;
     
     feedBacks= generateFeedBacks(t_e,type);

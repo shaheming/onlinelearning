@@ -112,7 +112,6 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     % y_1
     y = y - 1/theta*gradients(z_t,gz);
     % gzs(1:end) = rand(1,t_e)* D;
-    gzs(1:end) = ones(1,t_e)*50;
     eta1 = theta;
     
     feedBacks= generateFeedBacks(t_e,type);

@@ -1,7 +1,7 @@
 
 function  InjectionLOGD( M )
   % M = 15;
-  
+  tic;
   mkdir img injectionLOGD;
   global img_path;
   img_path ='injectionLOGD';
@@ -49,6 +49,7 @@ function  InjectionLOGD( M )
   legh.FontSize = 20;
   hold off;
   saveas(cFig,strcat('img/',xFigName),'png');
+  toc;
 end
 
 
@@ -59,8 +60,6 @@ function [outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   global log_bound;
   log_bound = T;
   % your decision domain used in projection
-  global gzs;
-  gzs  = zeros(1,T); % <G , Z>
   
   global myChoices;
   myChoices = zeros(1,T);
@@ -109,10 +108,10 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     % y_1
     y = y - 1/theta*gradients(z_t,gz);
     % gzs(1:end) = rand(1,t_e)* D;
-    gzs(1:end) = ones(1,t_e)*50;
     eta1 = theta;
     feedBackSum = gradients(z_t,gz);
-    feedBacks= generateFeedBacks(t_e,type);
+%      feedBacks= generateFeedBacks(t_e,type);
+
     originTime = 1;
   end
   
@@ -125,12 +124,12 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     % gDelayedFeedBack(B,step,t,feedbackHeap,type);
     myChoices(t) = project(y,x_bound);
     
-    %     [feedBackTime,originTime] = getFeedBack(t,type);
-    feedBackTime = feedBacks(originTime);
-    
+   % [feedBackTime,originTime] = getFeedBack(t,type);
+      feedBackTime = getFeedBack(originTime,type);
+%    feedBackTime=feedBacks(originTime);
     if feedBackTime - 1  == t
       % clean
-      
+
       feedBackSum = 0;
       % get all feedbacks
       % count feedback loss function
@@ -173,15 +172,15 @@ function [feedBackTime] = getFeedBack(t,type)
     case 'linear'
       [feedBackTime] =  t*50+t;
     case 'log'
-       if t == 1
-         feedBackTime  = 2;
+       if t =~= 1
+         feedBackTime = t*ceil(log2(t)) + t ;
        else
-        feedBackTime = t*ceil(log2(t)) + t ;
+         feedBackTime  = 2;
        end
     case 'square'
-      [feedBackTime] = t*t;
+      [feedBackTime] = t*t+ t;
     case 'exp'
-      [feedBackTime] = 2^t;
+      [feedBackTime] = 2^t+ t;
     otherwise
       error('Delay type err');
   end
