@@ -32,7 +32,7 @@ function  LOGD( M )
   %   regrets = {size(types,2)};
   index = 0;
   
-  cFig = figure('name',xFigName,'NumberTitle','off');
+  cFig = figure('name',xFigName,'NumberTitle','off','Visible','Off');
   set(cFig,'position',get(0,'screensize'));
   
   for i = types
@@ -114,7 +114,7 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     % gzs(1:end) = rand(1,t_e)* D;
     eta1 = theta;
     
-    feedBacks= generateFeedBacks(t_e,type);
+%     feedBacks= generateFeedBacks(t_e,type);
     originTime = 1;
   end
   
@@ -129,8 +129,8 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
       myChoices(t) = project(y,x_bound);
     
 %     [feedBackTime,originTime] = getFeedBack(t,type);
-       feedBackTime = feedBacks(originTime);
-    
+%        feedBackTime = feedBacks(originTime);
+    feedBackTime =getFeedBack(originTime,type);
     if feedBackTime - 1  == t
       % clean
       
@@ -212,3 +212,4 @@ function [feedBackTime] = getFeedBack(t,type)
     otherwise
       error('Delay type err');
   end
+end
