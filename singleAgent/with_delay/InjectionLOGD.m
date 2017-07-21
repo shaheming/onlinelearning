@@ -1,17 +1,17 @@
 
 function  InjectionLOGD( M )
   % M = 15;
- 
+  
   mkdir img injectionLOGD;
   global img_path;
   img_path ='injectionLOGD';
   algorithmName = 'injectionLOGD';
   global y0;
-  y0 =52;
+  y0 =48;
   global theta;
-  theta =2;
+  theta = 100;
   regretsFigName = sprintf('%s-%s',algorithmName,'Regrets');
-  xFigName = sprintf('%s-%s-y0=%d-theta=%d-times-%d',algorithmName,'X',y0,theta,M);
+  xFigName =sprintf('%s eta=t+%d y0=%d iteration=%d',algorithmName,theta,y0,2^M-1);
   
   global B;
   B = 5;
@@ -28,34 +28,27 @@ function  InjectionLOGD( M )
   isDraw = false;
   %   types = {'nodelay','bound','linear','log','square','exp','step'};
    types = {'log','square','linear'};
-  %types = {'log'};
+%   types = {'log'};
   %   regrets = {size(types,2)};
-  index = 0;
-  for i = types
-    rng(2);
-    index = index+ 1;
-    [outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
-    regrets{index} = {outMyChoices,char(i)};
-  end
-  
   cFig = figure('name',xFigName,'NumberTitle','off');
   set(cFig,'position',get(0,'screensize'));
-  
-  for i = regrets
-    plot(i{1}{1},'DisplayName',char(i{1}{2}),'LineWidth',1.5);
+  index = 0;
+  for i = types
+    index = index+ 1;
+    [outMyChoices] = OGD_DELAY_IN(char(i),M,isDraw);
+    plot(outMyChoices,'DisplayName',char(i),'LineWidth',1.5);
+    clear outMyChoices;
     hold on;
   end
-  algorithmName = 'StepSizeLOGD';
-  headLine=sprintf('%s eta=t+%d y0=%d iteration=2**%d-1',algorithmName,theta,y0,M);
-  title(headLine,'FontSize',20,'FontWeight','normal');
+  
+  title(xFigName,'FontSize',20,'FontWeight','normal');
   hold on;
   
   legh  =legend(types,'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   hold off;
-   headLine=sprintf('%s eta=t+%d y0=%d iteration=2exp%d-1',algorithmName,theta,y0,M);
-  saveas(cFig,strcat('img/',headLine),'png');
+  saveas(cFig,strcat('img/',xFigName),'png');
 end
 
 
@@ -63,7 +56,7 @@ end
 function [outMyChoices]= OGD_DELAY_IN(type,M,isDraw)
   import MinHeap
   T = 2^(M)-1; % avoid the last value to 0
-   global log_bound;
+  global log_bound;
   log_bound = T;
   % your decision domain used in projection
   global gzs;
@@ -119,9 +112,6 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     gzs(1:end) = ones(1,t_e)*50;
     eta1 = theta;
     feedBackSum = gradients(z_t,gz);
-    feedBackCountLast = 1;
-    feedBackCount = 0;
-    
     feedBacks= generateFeedBacks(t_e,type);
     originTime = 1;
   end
@@ -133,30 +123,25 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     
     % update x
     % gDelayedFeedBack(B,step,t,feedbackHeap,type);
-     feedBackSum = 0;
     myChoices(t) = project(y,x_bound);
     
-%     [feedBackTime,originTime] = getFeedBack(t,type);
-       feedBackTime = feedBacks(originTime);
+    %     [feedBackTime,originTime] = getFeedBack(t,type);
+    feedBackTime = feedBacks(originTime);
     
     if feedBackTime - 1  == t
       % clean
       
-      feedBackCountLast = 0; % void div 0
       feedBackSum = 0;
       % get all feedbacks
-      feedBackCount = feedBackCount + 1;
       % count feedback loss function
-      feedBackCountLast = feedBackCountLast + 1;
       % originTime is the time the delay genrate
       feedBackSum = feedBackSum + gradients(myChoices(originTime),gz);
       originTime = originTime + 1;
-      eta1 = eta1+1;
     end
+    eta1 = eta1+1;
     
+    y = y - (1 / eta1) * feedBackSum;
     
-    y = y - (1 / eta1) * 1/feedBackCountLast* feedBackSum;
-   
   end
   outY = y;
 end
@@ -182,39 +167,25 @@ end
 
 
 
-function [feedBackTime,originTime] = getFeedBack(t,type)
-  global log_bound;
+function [feedBackTime] = getFeedBack(t,type)
+
   switch lower(type)
     case 'linear'
-      [originTime] =  t/50;
+      [feedBackTime] =  t*50+t;
     case 'log'
-      
-      for i = floor(log2(t)):log_bound
-        if t ==1
-          originTime = t;
-          break;
-        elseif i*ceil(log2(i)) + i== t
-          originTime = i;
-          break;
-        elseif i*ceil(log2(i)) + i > t
-         originTime = 0.1;
-         break;
-        else
-          originTime = 0.1;
-        end
-      end
+       if t == 1
+         feedBackTime  = 2;
+       else
+        feedBackTime = t*ceil(log2(t)) + t ;
+       end
     case 'square'
-      [originTime] = sqrt(t);
+      [feedBackTime] = t*t;
     case 'exp'
-      [originTime] = log2(t);
+      [feedBackTime] = 2^t;
     otherwise
       error('Delay type err');
   end
-  if ceil(originTime) == originTime
-    feedBackTime = t + 1;
-  else
-    feedBackTime = t - 1;
-  end
+
 end
 
 function feedBacks = generateFeedBacks(T,type)
@@ -238,4 +209,3 @@ function feedBacks = generateFeedBacks(T,type)
     end
   end
 end
-  

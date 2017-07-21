@@ -1,7 +1,9 @@
 function loop()
-  T = 14;
-  LOGD(T);
-  StepsizeLOGD(T);
-  InjectionLOGD(T);
+  M = 30;
+  InjectionLOGD(M);
+  close all;
+  LOGD(M);
+  close all;
+  StepsizeLOGD(M);
   close all;
 end
