@@ -30,7 +30,7 @@ function  StepsizeLOGD( M )
   types = {'log','square','linear'};
   %types = {'log'};
   %   regrets = {size(types,2)};
-  cFig = figure('name',xFigName,'NumberTitle','off');
+  cFig = figure('name',xFigName,'NumberTitle','off','Visible','Off');
   set(cFig,'position',get(0,'screensize'));
    index = 0;
   for i = types
