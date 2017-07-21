@@ -120,10 +120,9 @@ end
 function outX = gradient(x)
   r = x(1);
   theta = x(2);
-  
 
-  outX(1) = (3+ sin(5*theta) + cos(3*theta))*(10/3 * r - 3 * r^2)+ rand(1)-0.5;
-  outX(2) =(5*cos(5*theta) - 3*sin(3*theta))*r^2*(5/3 - r)+rand(1)*2*pi -pi;
+  outX(1) = (3+ sin(5*theta) + cos(3*theta))*(10/3 * r - 3 * r^2)+ (rand(1)-0.5)/10;
+  outX(2) =(5*cos(5*theta) - 3*sin(3*theta))*r^2*(5/3 - r)+rand(1)*0.4 -0.2;
 end
 
 % the reward function U
