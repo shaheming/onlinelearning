@@ -8,8 +8,6 @@ function out = LOGD_M(M)
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   % T = 50000;
-  global eta;
-  eta = 1;
   N = 4;
   global x_bound;
 
@@ -23,7 +21,17 @@ function out = LOGD_M(M)
   % D and eta are used in reward function U
 
   global updateP;
-  updateP = [1/5,1/5,1/5,1/5];
+  updateP = [1/10,1/10,1/10,1/10];
+%   updateP = [1,1,1,1];
+%   updateP = ones(1,N)*1/8;
+   updateP = [1/10,1/100,1/10,5/10];
+  global G;
+  global eta;
+  global r_start;
+  G = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
+  eta = [0.1;0.2;0.3;0.1];
+  r_start = [0.5,0.5,0.5,0.5];
+   
   global xFigName_1;
   global xFigName_2;
   xFigName_1 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-1-2','X',updateP(1),updateP(2));
@@ -47,16 +55,16 @@ end
 function  OGD_Primary(T,y0,N)
   
  
-  
-  disp('Begin Loop');
+  markersize = 1;
+  disp('Begin Loop\n');
   fprintf('Iterate %d turns',T);
   y0 = [0,0,0,0];
   %%%iteration begin
   choices_1=iteration(1,T,y0,N);
   %%%end
   y0_1=[0.016815,0.023363,0.031101, 0.016220];
-  choices_2=iteration(1,T,y0_1,N);
-  
+%   choices_2=iteration(1,T,y0_1,N);
+  choices_2=ones(T,N).*y0_1;
   disp('End Loop');
   
   global xFigName_1;
@@ -73,11 +81,11 @@ function  OGD_Primary(T,y0,N)
   hold on;
   matrix1=[y0(1),y0_1(1),y0(2),y0_1(2);choices_1(:,1),choices_2(:,1),choices_1(:,2),choices_2(:,2)];
   
-  plot(matrix1(:,1),'-o','MarkerSize',3,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+  plot(matrix1(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
   plot(matrix1(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
   hold on;
-  plot(matrix1(:,3),'-o','MarkerSize',3,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  plot(matrix1(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
   hold on;
   plot(matrix1(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
   
@@ -94,11 +102,11 @@ function  OGD_Primary(T,y0,N)
   set(xFig_1,'position',get(0,'screensize'));
   hold on;
 %   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
-  plot(matrix2(:,1),'-o','MarkerSize',3,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+  plot(matrix2(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
   hold on;
   plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
   hold on;
-  plot(matrix2(:,3),'-o','MarkerSize',3,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  plot(matrix2(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
   hold on;
   plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
   hold on;
@@ -121,11 +129,10 @@ function outChoices=iteration(t_b,t_e,y0,N)
   
   global x_bound;
   global updateP;
+  global G;
+  global eta;
+  global r_start;
 
-  G = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
-  eta = [0.1;0.2;0.3;0.1];
-
-  r_start = [0.5,0.5,0.5,0.5];
 
   
   choices=zeros(t_e,N);
@@ -148,7 +155,8 @@ function outChoices=iteration(t_b,t_e,y0,N)
     choices(t,:) = project(y,x_bound,N);
     %y
     gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,r_start,eta);
-    y = y - (1 / eta1)*gradientTmp;
+    % y = y - (1 / eta1)*gradientTmp./updateP;
+      y = y - (1 / eta1)*gradientTmp;
   end
   outChoices = choices;
   
@@ -157,11 +165,12 @@ end
 % the difference of reward function U
 function outX = gradient(x,G,r_start,eta)
   outX = (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))';
+  %*(size(G,1)-1)
 end
 
 % the reward function U
 function uout = userCost(x,G,r_start,eta)
-  uout = (1./(2*diag(G)).*(diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).^2)';
+  uout = (1./(2*diag(G)).*(diag(G).*x'-r_start'.*(G*x' - x'.*diag(G) + eta)).^2)';
 end
 
 
@@ -181,4 +190,19 @@ function x_t = project(y_t,x_bound,N)
 end
 
 
+function outX = gradientTest(x,G,r_start,eta)
+  x_best = [0.016815,0.023363,0.031101, 0.016220]; 
+  outX = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))./diag(G).*[x-x_best]' );
+ 
+  %*(size(G,1)-1)
+end
+
+function outX = gradientTestP(x,G,r_start,eta,p)
+  x_best = [0.016815,0.023363,0.031101, 0.016220]; 
+  outX =  (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*[x-x_best]' ;
+  disp(outX');
+  outX=sum(outX);
+  %*(size(G,1)-1)
+   disp(p);
+end
 
