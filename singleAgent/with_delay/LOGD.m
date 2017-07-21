@@ -193,4 +193,22 @@ function feedBacks = generateFeedBacks(T,type)
     end
   end
 end
-  
+ 
+function [feedBackTime] = getFeedBack(t,type)
+
+  switch lower(type)
+    case 'linear'
+      [feedBackTime] =  t*50+t;
+    case 'log'
+       if t ~= 1
+         feedBackTime = t*ceil(log2(t)) + t ;
+       else
+         feedBackTime  = 2;
+       end
+    case 'square'
+      [feedBackTime] = t*t+ t;
+    case 'exp'
+      [feedBackTime] = 2^t+ t;
+    otherwise
+      error('Delay type err');
+  end

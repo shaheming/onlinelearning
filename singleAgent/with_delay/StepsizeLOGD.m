@@ -112,7 +112,7 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
 
     eta1 = theta;
     
-    feedBacks= generateFeedBacks(t_e,type);
+%     feedBacks= generateFeedBacks(t_e,type);
     originTime = 1;
   end
   
@@ -127,8 +127,8 @@ function [outY] = iteration(t_b,t_e,y1,doubling_flag,type)
     myChoices(t) = project(y,x_bound);
     
     %     [feedBackTime,originTime] = getFeedBack(t,type);
-    feedBackTime = feedBacks(originTime);
-    
+%     feedBackTime = feedBacks(originTime);
+    feedBackTime =getFeedBack(originTime,type);
     if feedBackTime - 1  == t
       % clean
       feedBackSum = 0;
@@ -188,4 +188,25 @@ function feedBacks = generateFeedBacks(T,type)
         error('Delay type err');
     end
   end
+end
+
+function [feedBackTime] = getFeedBack(t,type)
+
+  switch lower(type)
+    case 'linear'
+      [feedBackTime] =  t*50+t;
+    case 'log'
+       if t ~= 1
+         feedBackTime = t*ceil(log2(t)) + t ;
+       else
+         feedBackTime  = 2;
+       end
+    case 'square'
+      [feedBackTime] = t*t+ t;
+    case 'exp'
+      [feedBackTime] = 2^t+ t;
+    otherwise
+      error('Delay type err');
+  end
+
 end
