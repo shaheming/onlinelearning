@@ -25,6 +25,7 @@ function out = LOGD_UNEQUATION(M)
 %   updateP = [1,1,1,1];
 %   updateP = ones(1,N)*1/8;
    updateP = [1/10,1/100,1/10,5/10];
+   updateP = [0.311106794085914, 0.413580438050240, 0.00175190075586340 ,0.123968644352259];
   global G;
   global eta;
   global r_start;
@@ -36,13 +37,19 @@ function out = LOGD_UNEQUATION(M)
   global xFigName_2;
   xFigName_1 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-1-2','X',updateP(1),updateP(2));
   xFigName_2 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-3-4','X',updateP(3),updateP(4));
-  
+ 
+  q=testUnequation(G,r_start,eta);
+  disp(q);
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
-  
-  
   rng(2);
+  outP = findUnconvergeP(G,r_start,eta);
+  if size(outP) ~= size([])
+    updateP = outP(1,:);
+  end
+    
+  
   OGD_Primary(T,y0,N);
   
   %%%%%%%end%%%%%%%%
@@ -192,17 +199,54 @@ end
 
 function outX = gradientTest(x,G,r_start,eta)
   x_best = [0.016815,0.023363,0.031101, 0.016220]; 
-  outX = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))./diag(G).*[x-x_best]' );
+  outX = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))./diag(G).*(x-x_best)' );
  
   %*(size(G,1)-1)
 end
 
-function outX = gradientTestP(x,G,r_start,eta,p)
+function outXP = gradientTestP(x,G,r_start,eta,p)
   x_best = [0.016815,0.023363,0.031101, 0.016220]; 
-  outX =  (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*[x-x_best]' ;
-  disp(outX');
-  outX=sum(outX);
-  %*(size(G,1)-1)
-   disp(p);
+  outXP = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*(x-x_best)' );
 end
+
+function outP=findUnconvergeP(G,r_start,eta)
+  x = rand(2^20,4)*100;
+  %or
+  %x = rand(1,4)*100.*ones(2^20,4);
+  p = rand(2^20,4);
+  testParameter = gradientTestP(x,G,r_start,eta,p);
+  pos= find(testParameter < 0);
+  outP = p(pos',:);
+end
+
+
+function outP=testUnequation(G,r_start,eta)
+  x = rand(2^25,4)*100;
+  testParameter = gradientTest(x,G,r_start,eta);
+  pos= find(testParameter < 0);
+  outP = x(pos',:);
+end
+
+% x = rand(N,4)*100;
+% outX = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))./diag(G).*(x-x_best)' );
+% outX = outX'.*ones(N,4);
+% xa = 1:N;
+% xa =xa'.*ones(N,4);
+% stem3(xa,x,outX)
+% figure
+% stem3(xa,x,outX)
+% 
+% p = [1/10,1/100,1/10,5/10];
+% outXP =  (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*(x-x_best)' ;
+% outXP = outXP'.*ones(N,4);
+% outXP=sum(outXP);
+% outXP = outXP'.*ones(N,4);
+% stem3(xa,x,outXP)
+
+
+% x = rand(2^25,4)*100;
+% outXP =  (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*(x-x_best)' ;
+% outXP=sum(outXP);
+% find(outXP < 0)
+
 
