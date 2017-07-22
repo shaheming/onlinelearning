@@ -16,8 +16,8 @@ function out = SGD_N(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   %rng(2);
-   types = {'Bernoulli','Log-normal','Markovian'};
-% types = {'Markovian'};
+%    types = {'Bernoulli','Log-normal','Markovian'};
+ types = {'Markovian'};
   for i = types
     rng(1);
     OGD_Primary(T,y0,N,algorithmName,i);
@@ -128,14 +128,14 @@ function outChoices=iteration(t_b,t_e,y0,N,type)
   
   r_start = ones(1,N)*0.5;
  
-  
+  state = [0,0];
   choices=zeros(t_e,N);
   
   if t_b == 1
     x_0 = project(y0,x_bound,N);
     %x0 feedback
     
-    [G,ETA,p] = stochasticFunct(G1,G2,ETA1,ETA2,[0,0],PT,type);
+    [G,ETA,state]  =  stochasticFunct(G1,G2,ETA1,ETA2,state,p,PT,type);
      
     y = y0 - 1*gradient(x_0,G,r_start,ETA);
   end
@@ -148,7 +148,8 @@ function outChoices=iteration(t_b,t_e,y0,N,type)
     %x
     choices(t,:) = project(y,x_bound,N);
     %y
-   [G,ETA,p] = stochasticFunct(G1,G2,ETA1,ETA2,p,PT,type);
+    [G,ETA,state] =   stochasticFunct(G1,G2,ETA1,ETA2,state,p,PT,type);
+    
     y = y - (1 / eta1)*gradient(choices(t,:),G,r_start,ETA);
   end
   outChoices = choices;
@@ -182,56 +183,56 @@ function x_t = project(y_t,x_bound,N)
 end
 
 % types = {'Bernoulli','Log-normal','Markovian'};
-function   [G,ETA,p] = stochasticFunct(G1,G2,ETA1,ETA2,p,PT,type)
+function  [G,ETA,outState] = stochasticFunct(G1,G2,ETA1,ETA2,lastState,p,PT,type)
   switch type
     case 'Bernoulli'
-      [G,ETA,p] = bernoulli(G1,G2,ETA1,ETA2,p);
+    [G,ETA,outState] = bernoulli(G1,G2,ETA1,ETA2,p);
     case 'Log-normal'
-      [G,ETA,p] = logNormal(G1,G2,ETA1,ETA2,p);
+     [G,ETA,outState] = logNormal(G1,G2,ETA1,ETA2,p);
     case 'Markovian'
-      [G,ETA,p] =  markovian(G1,G2,ETA1,ETA2,p,PT);
+     [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT);
     otherwise
       error('Delay type err');
   end
   
 end
 
-function  [G,ETA,outP] = bernoulli(G1,G2,ETA1,ETA2,p)
+function [G,ETA,outState] = bernoulli(G1,G2,ETA1,ETA2,p)
   
-  output = binornd(1,0.25);
+  output = binornd(1,p(1));
   outputs =[output,1-output];
   G =  G1*outputs(1)+G2*outputs(2);
 % output = binornd(1,0.25);
 % outputs =[output,1-output];
   ETA = ETA1*outputs(1)+ETA2*outputs(2);
-  outP = p;
-  
+ 
+  outState = [-1,-1];
 end
 
-function  [G,ETA,outP] = logNormal(G1,G2,ETA1,ETA2,p)
-  ETA_E = 0.25 * ETA1 + 0.75*ETA2;
-  G_E = 0.25 * G1 + 0.75*G2;
+function [G,ETA,outState]= logNormal(G1,G2,ETA1,ETA2,p)
+  ETA_E = p(1) * ETA1 + p(2) *ETA2;
+  G_E = p(1)  * G1+p(2)*G2;
   %log normal G
   mu=log(G_E)-1/2*ones(size(G_E));
   G=lognrnd(mu,[1,1;1,1]);
   %log normal eta
   mu=log(ETA_E)-1/2*ones(size(ETA_E));
   ETA = lognrnd(mu,[1;1]);
-  outP = p;
+  outState = [-1,-1];
 end
 
-function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,PT)
+function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT)
  s1={G1,ETA1};
  s2={G2,ETA2};
  S = {s1,s2};
  if lastState ==[0,0]
-   output = binornd(1,0.25);
+   output = binornd(1,p(1));
    outState =[output,1-output];
- elseif lastState ==[1,0]
-   output = binornd(1,2/5);
+ elseif lastState == [1,0]
+   output = binornd(1,PT(1,1));
    outState =[output,1-output];
  elseif lastState ==[0,1]
-   output = binornd(1,1/5);
+   output = binornd(1,PT(2,1));
    outState =[output,1-output];
  end
  outputs =outState;
