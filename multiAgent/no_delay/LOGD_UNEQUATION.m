@@ -32,7 +32,7 @@ function out = LOGD_UNEQUATION(M)
   
   global xFigName_1;
   global xFigName_2;
-  xFigName_1 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-1-2','X',updateP(1),updateP(2));
+  xFigName_1 = sprintf('%s-%s-p1-%.3f-p2-%.3f-p3-%.3f-p4-%.3f','LOGD-M-Link-1-2-3-4','X',updateP);
   xFigName_2 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-3-4','X',updateP(3),updateP(4));
   
   %   q=testUnequation(G,r_start,eta);
@@ -86,47 +86,54 @@ function  OGD_Primary(T,y0,N,isUseP)
   set(xFig,'position',get(0,'screensize'));
   hold on;
   matrix1=[y0(1),y0_1(1),y0(2),y0_1(2);choices_1(:,1),choices_2(:,1),choices_1(:,2),choices_2(:,2)];
+  matrix2=[y0(3),y0_1(3),y0(4),y0_1(4);choices_1(:,3),choices_2(:,3),choices_1(:,4),choices_2(:,4)];
   
-  plot(matrix1(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+  plot(matrix1(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5);
   hold on;
-  plot(matrix1(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
+  plot(matrix1(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5);
   hold on;
-  plot(matrix1(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+  plot(matrix1(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5);
   hold on;
-  plot(matrix1(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
-  
+  plot(matrix1(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5);
   hold on;
-  legh  =legend(lineName(1:N),'Location','best','EdgeColor','w');
+  plot(matrix2(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5);
+  hold on;
+  plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5);
+  hold on;
+  plot(matrix2(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5);
+  hold on;
+  plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5);
+  hold on;
+ 
+  legh  =legend(lineName(1:end),'Location','best','EdgeColor','w');
   legh.LineWidth = 2;
   legh.FontSize = 20;
   title(xFigName_1,'FontSize',20,'FontWeight','normal');
   hold off;
   
-  matrix2=[y0(3),y0_1(3),y0(4),y0_1(4);choices_1(:,3),choices_2(:,3),choices_1(:,4),choices_2(:,4)];
-  
-  xFig_1 = figure('name',xFigName_2,'NumberTitle','off');
-  set(xFig_1,'position',get(0,'screensize'));
-  hold on;
-  %   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
-  plot(matrix2(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
-  hold on;
-  plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
-  hold on;
-  plot(matrix2(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
-  hold on;
-  plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
-  hold on;
-  legh  =legend(lineName(N+1:end),'Location','best','EdgeColor','w');
-  legh.LineWidth = 2;
-  legh.FontSize = 20;
-  title(xFigName_2,'FontSize',20,'FontWeight','normal');
-  hold off;
+%   xFig_1 = figure('name',xFigName_2,'NumberTitle','off');
+%   set(xFig_1,'position',get(0,'screensize'));
+%   hold on;
+%   %   plot(matrix2,'DisplayName',char(lineName{N+1:N}),'LineWidth',1.5);
+%   plot(matrix2(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5,'color','b');
+%   hold on;
+%   plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5,'color','r');
+%   hold on;
+%   plot(matrix2(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5,'color','c');
+%   hold on;
+%   plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5,'color','m');
+%   hold on;
+%   legh  =legend(lineName(N+1:end),'Location','best','EdgeColor','w');
+%   legh.LineWidth = 2;
+%   legh.FontSize = 20;
+%   title(xFigName_2,'FontSize',20,'FontWeight','normal');
+%   hold off;
   global img_path;
   
   xFigName_1 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-1-2','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
-  xFigName_2 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-3-4','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
+% xFigName_2 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-3-4','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
   saveas(xFig,strcat('img/',xFigName_1),'png');
-  saveas(xFig_1,strcat('img/',xFigName_2),'png');
+%   saveas(xFig_1,strcat('img/',xFigName_2),'png');
   
 end
 
