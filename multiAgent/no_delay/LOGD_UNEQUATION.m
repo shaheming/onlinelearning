@@ -47,8 +47,6 @@ function out = LOGD_UNEQUATION(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   
-  
-  
   OGD_Primary(T,y0,N,isUseP);
   
   %%%%%%%end%%%%%%%%
