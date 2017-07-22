@@ -201,8 +201,8 @@ function  [G,ETA,outP] = bernoulli(G1,G2,ETA1,ETA2,p)
   output = binornd(1,0.25);
   outputs =[output,1-output];
   G =  G1*outputs(1)+G2*outputs(2);
-%   output = binornd(1,0.25);
-%   outputs =[output,1-output];
+% output = binornd(1,0.25);
+% outputs =[output,1-output];
   ETA = ETA1*outputs(1)+ETA2*outputs(2);
   outP = p;
   

@@ -18,9 +18,10 @@ function out = LOGD_UNEQUATION(M)
   %   updateP = [1,1,1,1];
   %   updateP = ones(1,N)*1/8;
   %  updateP = [1/10,1/100,1/10,5/10];
-  updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
-  
-  isUseP = true;
+%   updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
+    updateP = [ 1/2 1/2 ,1/2 ,1/2];
+
+  isUseP = false;
   
   global G;
   global eta;
@@ -45,7 +46,7 @@ function out = LOGD_UNEQUATION(M)
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
-  rng(2);
+  
   
   
   OGD_Primary(T,y0,N,isUseP);
