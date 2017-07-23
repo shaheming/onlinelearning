@@ -17,7 +17,7 @@ function out = SGD_N(M)
   %%%%%%%%%%%%%%%%%%
   %rng(2);
 %    types = {'Bernoulli','Log-normal','Markovian'};
- types = {'Markovian'};
+ types = {'Bernoulli'};
   for i = types
     rng(1);
     OGD_Primary(T,y0,N,algorithmName,i);
@@ -126,7 +126,7 @@ function outChoices=iteration(t_b,t_e,y0,N,type)
   ETA2=[0.15;0.05];
 
   PT=[2/5,3/5;1/5,4/5];
-  
+  P = zeros(t_e+1,1);
   r_start = ones(1,N)*0.5;
  
   state = [0,0];
@@ -137,7 +137,7 @@ function outChoices=iteration(t_b,t_e,y0,N,type)
     %x0 feedback
     
     [G,ETA,state]  =  stochasticFunct(G1,G2,ETA1,ETA2,state,p,PT,type);
-     
+     P(1) = state(1);
     y = y0 - 1*gradient(x_0,G,r_start,ETA);
   end
   
@@ -150,7 +150,7 @@ function outChoices=iteration(t_b,t_e,y0,N,type)
     choices(t,:) = project(y,x_bound,N);
     %y
     [G,ETA,state] =   stochasticFunct(G1,G2,ETA1,ETA2,state,p,PT,type);
-    
+    P(1+t) = state(1);
     y = y - (1 / eta1)*gradient(choices(t,:),G,r_start,ETA);
   end
   outChoices = choices;
@@ -207,7 +207,7 @@ function [G,ETA,outState] = bernoulli(G1,G2,ETA1,ETA2,p)
 % outputs =[output,1-output];
   ETA = ETA1*outputs(1)+ETA2*outputs(2);
  
-  outState = [-1,-1];
+  outState = outputs;
 end
 
 function [G,ETA,outState]= logNormal(G1,G2,ETA1,ETA2,p)
