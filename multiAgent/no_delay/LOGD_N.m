@@ -22,14 +22,14 @@ function out = LOGD_N(M)
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[0,10^4];
+  X_BOUND = ones(N,2).*[0,0.4];
   Y0 = [0,0,0,0];
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
   R_STAR = [0.5,0.5,0.5,0.5];
   % optimum p
   oP=[0.016815,0.023363,0.031101, 0.016220];
- 
+  
   PT=[2/5,3/5;1/5,4/5]; %MKjTRAN
   NOISE_P=[1/4,3/4];
   
@@ -52,30 +52,29 @@ function out = LOGD_N(M)
   ETA1=[0.07;0.14;0.21;0.07];
   ETA2=[0.11;0.22;0.33;0.11];
   
-  updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
-  updateP = [ 1/2 1/2 ,1/2 ,1/2];
   %updateP = [ 1/2 1/2 ,1/2 ,1/2];
-  %updateP = [1,1,1,1];
-  % updateP = [1/10 ,1/10,1/10,1/10];
+  %sha
+  updateP=[ 0.4259 ,0.8384 ,0.7423 ,0.0005];
+  %sun
+  %updateP = [0.9977 ,0.8468 ,0.0713 ,0.0049];
   % updateP = [1,1,1,1];
-  % updateP = ones(1,N)*1/8;
-  % updateP = [1/10,1/100,1/10,5/10];
   
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
-  types = {'Bernoulli','Log-normal','Markovian','No'};
-  types = {'No'};
-  isRegular = true;
- 
+  types = {'No','Log-normal','Bernoulli','Markovian'};
+  %    types = {'Bernoulli','Markovian'};
+  isNormalize = true;
+  
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
+  tic
   for i = types
-    tic
-    rng(1);
-    OGD_Primary(T,Y0,N,char(i),isRegular);
-    rng(1);
-    OGD_Primary(T,Y0,N,char(i),~isRegular);
+    
+    rng(10);
+    OGD_Primary(T,Y0,N,char(i),isNormalize);
+    rng(10);
+    OGD_Primary(T,Y0,N,char(i),~isNormalize);
     toc
   end
   fprintf('End Loop\n');
@@ -86,12 +85,12 @@ end
 
 
 
-function  OGD_Primary(T,Y0,N,noiseType,isRegular)
+function  OGD_Primary(T,Y0,N,noiseType,isNormalize)
   
   %%%%%%%%%%%%%%%%%%
   %   SET TITLE  %
-  %%%%%%%%%%%%%%%%%%  
-  lineWidth = 0.5;
+  %%%%%%%%%%%%%%%%%%
+  lineWidth = 1;
   global algorithmName;
   global img_path;
   global updateP;
@@ -100,12 +99,12 @@ function  OGD_Primary(T,Y0,N,noiseType,isRegular)
   imgName = sprintf('%s-Noise:%s',imgName,noiseType);
   titleName = sprintf('%s-Noise:%s',titleName,noiseType);
   
-  if isRegular
-    imgName = sprintf('%s %s',imgName,'Regular');
-    titleName = sprintf('%s %s',titleName,'Regular');
+  if isNormalize
+    imgName = sprintf('%s %s',imgName,'Normalize');
+    titleName = sprintf('%s %s',titleName,'Normalize');
   else
-    imgName = sprintf('%s %s',imgName,'No-Regular');
-    titleName = sprintf('%s %s',titleName,'No-Regular');
+    imgName = sprintf('%s %s',imgName,'No-Normalize');
+    titleName = sprintf('%s %s',titleName,'No-Normalize');
   end
   
   
@@ -113,12 +112,12 @@ function  OGD_Primary(T,Y0,N,noiseType,isRegular)
   fprintf('%s\n',titleName);
   % Main iteration
   
- 
-  choices_1=iteration(1,T,Y0,N,isRegular,noiseType);
+  
+  choices_1=iteration(1,T,Y0,N,isNormalize,noiseType);
   
   
   %draw and save img
-   
+  
   tic;
   global oP;
   choices_2=ones(T+1,N).*oP;
@@ -146,11 +145,11 @@ function  OGD_Primary(T,Y0,N,noiseType,isRegular)
   hold off;
   
   saveas(xFig,strcat('img/',fileName),'png');
- 
+  
 end
 
 
-function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
+function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType)
   
   global X_BOUND;
   global updateP;
@@ -171,7 +170,10 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
     x_0 = project(Y0,X_BOUND,N);
     %x0 feedback
     [G,ETA,STATE]  =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
-    y = Y0 - 1*gradient(x_0,G,R_STAR,ETA);
+    %     gradientTmp = binornd(1,updateP).*gradient(x_0,G,R_STAR,ETA);
+    %     y = Y0 - 1*gradientTmp./updateP;
+    gradientTmp = gradient(x_0,G,R_STAR,ETA);
+    y = Y0 - 1*gradientTmp;
   end
   
   for t = t_b : t_e
@@ -183,7 +185,7 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
     [G,ETA,STATE] =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
     gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
     
-    if isRegular
+    if isNormalize
       y = y - (1 / eta1)*gradientTmp./updateP;
     else
       y = y - (1 / eta1)*gradientTmp;
