@@ -22,7 +22,7 @@ function out = LOGD_N(M)
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[0,0.4];
+  X_BOUND = ones(N,2).*[0,0.04];
   Y0 = [0,0,0,0];
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
@@ -57,22 +57,23 @@ function out = LOGD_N(M)
   updateP=[ 0.4259 ,0.8384 ,0.7423 ,0.0005];
   %sun
   %updateP = [0.9977 ,0.8468 ,0.0713 ,0.0049];
-  % updateP = [1,1,1,1];
+  updateP = [1,1,1,1];
   
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
   types = {'No','Log-normal','Bernoulli','Markovian'};
   %    types = {'Bernoulli','Markovian'};
+     types = {'No'};
   isNormalize = true;
   
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
   tic
   for i = types
-    rng(10);
-    OGD_Primary(T,Y0,N,char(i),isNormalize);
-    rng(10);
+     rng(5);
+%     OGD_Primary(T,Y0,N,char(i),isNormalize);
+%     rng(10);
     OGD_Primary(T,Y0,N,char(i),~isNormalize);
     toc
   end

@@ -20,11 +20,11 @@ function out = LOGD_N_D(M)
   global updateP;
   global oP;
   global B;
-  B = 5; % BoundDelay
+  B = 10; % BoundDelay
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[0,10^4];
+  X_BOUND = ones(N,2).*[0,0.04];
   Y0 = [0,0,0,0];
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
@@ -62,13 +62,15 @@ function out = LOGD_N_D(M)
   types = {'Bernoulli','Log-normal','Markovian','No'};
   types = {'No'};
   isRegular = false;
- 
+  feedBackTypes = {'LOGD','Injection'};
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
   for i = types
     tic
-    rng(1);
-    OGD_Primary(T,Y0,N,char(i),isRegular);
+    rng(5);
+    for j = feedBackTypes
+      OGD_Primary(T,Y0,N,char(i),char(j),isRegular);
+    end
   end
   fprintf('End Loop\n');
   %%%%%%%end%%%%%%%%
@@ -79,12 +81,12 @@ end
 
 
 
-function  OGD_Primary(T,Y0,N,noiseType,isRegular)
+function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular)
   
   %%%%%%%%%%%%%%%%%%
   %   SET TITLE  %
   %%%%%%%%%%%%%%%%%%  
-  lineWidth = 0.5;
+  lineWidth = 1;
   global algorithmName;
   global img_path;
   global updateP;
@@ -94,25 +96,25 @@ function  OGD_Primary(T,Y0,N,noiseType,isRegular)
   titleName = sprintf('%s-Noise:%s',titleName,noiseType);
   
   if isRegular
-    imgName = sprintf('%s %s',imgName,'Regular');
-    titleName = sprintf('%s %s',titleName,'Regular');
+    imgName = sprintf('%s %s',imgName,'Normalize');
+    titleName = sprintf('%s %s',titleName,'Normalize');
   else
-    imgName = sprintf('%s %s',imgName,'No-Regular');
-    titleName = sprintf('%s %s',titleName,'No-Regular');
+    imgName = sprintf('%s %s',imgName,'No-Normalize');
+    titleName = sprintf('%s %s',titleName,'No-Normalize');
   end
   
+  imgName = sprintf('%s %s',imgName,feedBackType);
+  titleName = sprintf('%s %s',titleName,feedBackType);
   
   fileName = sprintf('%s%s',img_path,imgName);
   fprintf('%s\n',titleName);
   % Main iteration
   
  
-  choices_1=iteration(1,T,Y0,N,isRegular,noiseType);
+  choices_1=iteration(1,T,Y0,N,isRegular,noiseType,feedBackType);
   
   
   %draw and save img
-   
-  tic;
   global oP;
   choices_2=ones(T+1,N).*oP;
   
@@ -143,7 +145,7 @@ function  OGD_Primary(T,Y0,N,noiseType,isRegular)
 end
 
 
-function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
+function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType)
   
   global X_BOUND;
   global updateP;
@@ -186,16 +188,15 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
     
     if find(feedBackTimes == t+1)
        % count grediant of every user
-       [feedBackSums]=getFeedBackSum(t,heapCells,feedBackTimes==ones(1,N).*(t+1),choices,G,R_STAR,ETA);
+       checkFeedBack = feedBackTimes==ones(1,N).*(t+1);
+       [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,choices,G,R_STAR,ETA,feedBackSums,feedBackType);
     end
-    
-
+   
     %y
     [G,ETA,STATE] =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
-%     gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
+    %gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
     
-
-      y = y - (1 / eta1)*feedBackSums;
+     y = y - (1 / eta1)*feedBackSums;
     
     
   end
@@ -302,9 +303,10 @@ function [feedBackTimes]=getFeedBackTime(heapCells,N)
    end
 end
 
-function [feedBackSums]=getFeedBackSum(t,heapCells,agentFeedBack,choices,G,R_STAR,ETA)
-  feedBackSums = zeros(size(agentFeedBack));
-  for i= find(agentFeedBack==1)
+function [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,choices,G,R_STAR,ETA,lastFeedBackSums,feedBackType)
+  feedBackSums = zeros(size(checkFeedBack));
+  feedBackCounts = zeros(size(checkFeedBack));
+  for i= find(checkFeedBack==1)
      while heapCells{i}.Count() > 0
            out = num2cell(heapCells{i}.ReturnMin());
           [feedBackTime,~,~,~] = out{:};
@@ -315,15 +317,22 @@ function [feedBackSums]=getFeedBackSum(t,heapCells,agentFeedBack,choices,G,R_STA
             [~,originTime,~,~] = out{:};
             gradients = gradient(choices(originTime,:),G,R_STAR,ETA);
             feedBackSums(i)=feedBackSums(i)+ gradients(i);
+            feedBackCounts(i) = feedBackCounts(i) + 1;
            end
      end
   end
-  
+  switch feedBackType
+    case 'Injection'
+     % if there is no update will follow the update of the last iteration
+     pos = find(checkFeedBack==0);
+     feedBackSums(pos)=lastFeedBackSums(pos);
+  end
 end
 
 
 %the projection funciton
 function x_t = project(y_t,X_BOUND,N)
+  x_t = zeros(1,N);
   for i = 1:N
     if X_BOUND(i,1) <= y_t(i) && y_t(i) <=X_BOUND(i,2)
       x_t(i) = y_t(i);
