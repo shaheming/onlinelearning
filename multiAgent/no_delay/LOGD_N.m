@@ -53,6 +53,7 @@ function out = LOGD_N(M)
   ETA2=[0.11;0.22;0.33;0.11];
   
   updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
+  updateP = [ 1/2 1/2 ,1/2 ,1/2];
   %updateP = [ 1/2 1/2 ,1/2 ,1/2];
   %updateP = [1,1,1,1];
   % updateP = [1/10 ,1/10,1/10,1/10];
@@ -64,13 +65,18 @@ function out = LOGD_N(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   types = {'Bernoulli','Log-normal','Markovian','No'};
+  types = {'No'};
   isRegular = true;
  
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
   for i = types
+    tic
+    rng(1);
     OGD_Primary(T,Y0,N,char(i),isRegular);
+    rng(1);
     OGD_Primary(T,Y0,N,char(i),~isRegular);
+    toc
   end
   fprintf('End Loop\n');
   %%%%%%%end%%%%%%%%
@@ -106,11 +112,14 @@ function  OGD_Primary(T,Y0,N,noiseType,isRegular)
   fileName = sprintf('%s%s',img_path,imgName);
   fprintf('%s\n',titleName);
   % Main iteration
+  
+ 
   choices_1=iteration(1,T,Y0,N,isRegular,noiseType);
-
+  
   
   %draw and save img
-  
+   
+  tic;
   global oP;
   choices_2=ones(T+1,N).*oP;
   
@@ -137,7 +146,7 @@ function  OGD_Primary(T,Y0,N,noiseType,isRegular)
   hold off;
   
   saveas(xFig,strcat('img/',fileName),'png');
-
+ 
 end
 
 
