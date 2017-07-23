@@ -1,7 +1,7 @@
 function out = LOGD_N_D(M)
   %use doubling tricking to iterat
   
-  mkdir img LOGD_N;
+  mkdir img LOGD_N_D;
   global img_path;
   img_path ='LOGD_N_D/';
   global algorithmName;
@@ -53,11 +53,12 @@ function out = LOGD_N_D(M)
   ETA2=[0.11;0.22;0.33;0.11];
 
   updateP = [1,1,1,1];
+  %updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
   types = {'Bernoulli','Log-normal','Markovian','No'};
-  types = {'No'};
+%   types = {'No'};
   isRegular = true;
  
   fprintf('Begin Loop\n');
@@ -69,6 +70,7 @@ function out = LOGD_N_D(M)
   end
   fprintf('End Loop\n');
   %%%%%%%end%%%%%%%%
+  toc;
   pause(3);
   close all;
 end
@@ -155,16 +157,16 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
   
   choices=zeros(t_e,N);
   STATE = [0,0];
-  
   if t_b == 1
     x_0 = project(Y0,X_BOUND,N);
     %x0 feedback
     [G,ETA,STATE]  =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
     y = Y0 - 1*gradient(x_0,G,R_STAR,ETA);
+
   end
   
   for t = t_b : t_e
-    
+
     eta1 = t +1;
     % my choice
     choices(t,:) = project(y,X_BOUND,N);
