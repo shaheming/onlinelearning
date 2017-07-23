@@ -1,134 +1,41 @@
 function out = LOGD_N(M)
-  %use doubling tricking to iterate
-  % M = 18; % 2 ^ 15 = 32768
-  mkdir img LOGD_N;
+  %use doubling tricking to iterat
   
+  mkdir img LOGD_N;
   global img_path;
   img_path ='LOGD_N/';
+  global algorithmName;
+  algorithmName = 'SGD-N-U';
+  
+  global X_BOUND;
+  global G1;
+  global G2;
+  global ETA1;
+  global ETA2;
+  global NOISE_P;
+  global PT;
+  global G0;
+  global ETA0;
+  global R_STAR;
+  global updateP;
+  global oP;
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
-  
   N = 4;
-  global x_bound;
-  x_bound = ones(N,2).*[0,10^4];
-  y0 = [0,0,0,0];
-  
-  global updateP;
-  %  updateP = [1/10 ,1/10,1/10,1/10];
-  %   updateP = [1,1,1,1];
-  %   updateP = ones(1,N)*1/8;
-  %  updateP = [1/10,1/100,1/10,5/10];
-%   updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
-   % updateP = [ 1/2 1/2 ,1/2 ,1/2];
-  updateP = [1,1,1,1];
-  isUseP = false;
-  
-  global G;
-  global ETA;
-  global r_start;
-  G = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
-  ETA = [0.1;0.2;0.3;0.1];
-  r_start = [0.5,0.5,0.5,0.5];
-  
-  global xFigName_1;
-  global xFigName_2;
-  xFigName_1 = sprintf('%s-%s-p1-%.3f-p2-%.3f-p3-%.3f-p4-%.3f','LOGD-M-Link-1-2-3-4','X',updateP);
-  xFigName_2 = sprintf('%s-%s-p1-%.3f-p2-%.3f','LOGD-M-Link-3-4','X',updateP(3),updateP(4));
-  
-  %   q=testUnequation(G,r_start,eta);
-  %   outP = findUnconvergeP(G,r_start,eta);
-  %   if size(outP) ~= size([])
-  %     updateP = outP(1,:);
-  %   end
-  
-  
-  
-  %%%%%%%%%%%%%%%%%%
-  % main function  %
-  %%%%%%%%%%%%%%%%%%
-  
-  OGD_Primary(T,y0,N,isUseP);
-  
-  %%%%%%%end%%%%%%%%
-  
-  
-end
-
-
-
-function  OGD_Primary(T,y0,N,isUseP)
-  
-  
-  markersize = 1;
-  disp('Begin Loop\n');
-  fprintf('Iterate %d turns',T);
-  
-  %%%iteration begin
-  choices_1=iteration(1,T,y0,N,isUseP);
-  %%%end
-  y0_1=[0.016815,0.023363,0.031101, 0.016220];
-  %   choices_2=iteration(1,T,y0_1,N);
-  choices_2=ones(T,N).*y0_1;
-  disp('End Loop');
-  
-  global xFigName_1;
-  global xFigName_2;
-  
-  
-  for i = 1:2:N*2
-    lineName{i} =sprintf('p:%d',(i+1)/2);
-    lineName{i+1} =sprintf('p%d*',(i+1)/2);
-  end
-  
-  xFig = figure('name',xFigName_1,'NumberTitle','off');
-  set(xFig,'position',get(0,'screensize'));
-  hold on;
-  matrix1=[y0(1),y0_1(1),y0(2),y0_1(2);choices_1(:,1),choices_2(:,1),choices_1(:,2),choices_2(:,2)];
-  matrix2=[y0(3),y0_1(3),y0(4),y0_1(4);choices_1(:,3),choices_2(:,3),choices_1(:,4),choices_2(:,4)];
-  
-  plot(matrix1(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5);
-  hold on;
-  plot(matrix1(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5);
-  hold on;
-  plot(matrix1(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5);
-  hold on;
-  plot(matrix1(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5);
-  hold on;
-  plot(matrix2(:,1),'-o','MarkerSize',markersize,'DisplayName',char(lineName{1}),'LineWidth',1.5);
-  hold on;
-  plot(matrix2(:,2),'--','DisplayName',char(lineName{2}),'LineWidth',1.5);
-  hold on;
-  plot(matrix2(:,3),'-o','MarkerSize',markersize,'DisplayName',char(lineName{3}),'LineWidth',1.5);
-  hold on;
-  plot(matrix2(:,4),'-.','DisplayName',char(lineName{4}),'LineWidth',1.5);
-  hold on;
+  X_BOUND = ones(N,2).*[0,10^4];
+  Y0 = [0,0,0,0];
+  G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
+  ETA0 = [0.1;0.2;0.3;0.1];
+  R_STAR = [0.5,0.5,0.5,0.5];
+  % optimum p
+  oP=[0.016815,0.023363,0.031101, 0.016220];
  
-  legh  =legend(lineName(1:end),'Location','best','EdgeColor','w');
-  legh.LineWidth = 2;
-  legh.FontSize = 20;
-  title(xFigName_1,'FontSize',20,'FontWeight','normal');
-  hold off;
+  PT=[2/5,3/5;1/5,4/5]; %MKjTRAN
+  NOISE_P=[1/4,3/4];
   
-  global img_path;
-  
-  xFigName_1 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-1-2','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
-  saveas(xFig,strcat('img/',xFigName_1),'png');
-end
-
-
-function outChoices=iteration(t_b,t_e,y0,N,isUseP)
-  
-  global x_bound;
-  global updateP;
-  global G;
-  global ETA;
-  global r_start;
-  
-  p=[1/4,3/4];
-    
   G1 = ...
     [
-       9 ,0.25,5 ,1;
+    9 ,0.25,5 ,1;
     0.25 ,   9,1 ,5;
     5 ,1 ,9 ,0.25;
     1 ,5 ,0.25 ,9;
@@ -144,36 +51,130 @@ function outChoices=iteration(t_b,t_e,y0,N,isUseP)
   
   ETA1=[0.07;0.14;0.21;0.07];
   ETA2=[0.11;0.22;0.33;0.11];
+  
+  updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
+  %updateP = [ 1/2 1/2 ,1/2 ,1/2];
+  %updateP = [1,1,1,1];
+  % updateP = [1/10 ,1/10,1/10,1/10];
+  % updateP = [1,1,1,1];
+  % updateP = ones(1,N)*1/8;
+  % updateP = [1/10,1/100,1/10,5/10];
+  
+  %%%%%%%%%%%%%%%%%%
+  % main function  %
+  %%%%%%%%%%%%%%%%%%
+  types = {'Bernoulli','Log-normal','Markovian','No'};
+  isRegular = true;
+ 
+  fprintf('Begin Loop\n');
+  fprintf('Iterate %d turns\n',T);
+  for i = types
+    OGD_Primary(T,Y0,N,char(i),isRegular);
+    OGD_Primary(T,Y0,N,char(i),~isRegular);
+  end
+  fprintf('End Loop\n');
+  %%%%%%%end%%%%%%%%
+  pause(3);
+  close all;
+end
 
-  PT=[2/5,3/5;1/5,4/5];
-    g = zeros(4,4);
+
+
+function  OGD_Primary(T,Y0,N,noiseType,isRegular)
+  
+  %%%%%%%%%%%%%%%%%%
+  %   SET TITLE  %
+  %%%%%%%%%%%%%%%%%%  
+  lineWidth = 0.5;
+  global algorithmName;
+  global img_path;
+  global updateP;
+  imgName = sprintf('%s-%s',algorithmName,datestr(now, 'dd-mm-yy-HH-MM-SS'));
+  titleName = sprintf('%s-%s-P[p_1-p_4]-[%.3f,%.3f,%.3f,%.3f]',algorithmName,'Link[1-4]',updateP);
+  imgName = sprintf('%s-Noise:%s',imgName,noiseType);
+  titleName = sprintf('%s-Noise:%s',titleName,noiseType);
+  
+  if isRegular
+    imgName = sprintf('%s %s',imgName,'Regular');
+    titleName = sprintf('%s %s',titleName,'Regular');
+  else
+    imgName = sprintf('%s %s',imgName,'No-Regular');
+    titleName = sprintf('%s %s',titleName,'No-Regular');
+  end
+  
+  
+  fileName = sprintf('%s%s',img_path,imgName);
+  fprintf('%s\n',titleName);
+  % Main iteration
+  choices_1=iteration(1,T,Y0,N,isRegular,noiseType);
+
+  
+  %draw and save img
+  
+  global oP;
+  choices_2=ones(T+1,N).*oP;
+  
+  for i = 1:2:N*2
+    lineName{i} =sprintf('p:%d',(i+1)/2);
+    lineName{i+1} =sprintf('p%d*',(i+1)/2);
+  end
+  
+  xFig = figure('name',imgName,'NumberTitle','off');
+  set(xFig,'position',get(0,'screensize'));
+  hold on;
+  
+  for i = 1:N
+    plot([Y0(i);choices_1(:,i)],'DisplayName',char(lineName{i}),'LineWidth',lineWidth);
+    hold on;
+    plot(choices_2(:,i),'-.','DisplayName',char(lineName{2*i}),'LineWidth',lineWidth);
+    hold on;
+  end
+  
+  legh  =legend(lineName(1:end),'Location','best','EdgeColor','w');
+  legh.LineWidth = 2;
+  legh.FontSize = 20;
+  title(titleName,'FontSize',20,'FontWeight','normal');
+  hold off;
+  
+  saveas(xFig,strcat('img/',fileName),'png');
+
+end
+
+
+function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
+  
+  global X_BOUND;
+  global updateP;
+  global G0;
+  global ETA0;
+  global R_STAR;
+  global NOISE_P;
+  global G1;
+  global G2;
+  global ETA1;
+  global ETA2;
+  global PT;
+  
   choices=zeros(t_e,N);
-  state = [0,0];
-   type = 'Log-normal';
-%type = 'Bernoulli';
-  % start at 0 OMG this is a serious problem !!! because in matlab for i =
-  % i = 1:1 will iterate
+  STATE = [0,0];
+  
   if t_b == 1
-    x_0 = project(y0,x_bound,N);
+    x_0 = project(Y0,X_BOUND,N);
     %x0 feedback
-    [G,ETA,state]  =  stochasticFunct(G1,G2,ETA1,ETA2,state,p,PT,type);
-    y = y0 - 1*gradient(x_0,G,r_start,ETA);
-   g = g +G;
+    [G,ETA,STATE]  =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
+    y = Y0 - 1*gradient(x_0,G,R_STAR,ETA);
   end
   
   for t = t_b : t_e
-    %Z(1:end) = D * rand(size(Z,1),1);
-    % thetas(t) = G(2:end) * Z;
-    % my choice
+    
     eta1 = t +1;
-    %x
-    choices(t,:) = project(y,x_bound,N);
+    % my choice
+    choices(t,:) = project(y,X_BOUND,N);
     %y
-    [G,ETA,state] =   stochasticFunct(G1,G2,ETA1,ETA2,state,p,PT,type);
-    gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,r_start,ETA);
-    g = g +G;
- 
-    if isUseP
+    [G,ETA,STATE] =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
+    gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
+    
+    if isRegular
       y = y - (1 / eta1)*gradientTmp./updateP;
     else
       y = y - (1 / eta1)*gradientTmp;
@@ -181,91 +182,59 @@ function outChoices=iteration(t_b,t_e,y0,N,isUseP)
     
   end
   outChoices = choices;
-  disp(g/t_e);
 end
 
 % the difference of reward function U
-function outX = gradient(x,G,r_start,eta)
-  outX = (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))';
-  %*(size(G,1)-1)
+function outX = gradient(x,G,R_STAR,eta)
+  outX = (diag(G).*x'-R_STAR'.*(G*x' - x'.*diag(G)+ eta))';
 end
 
 % the reward function U
-function uout = userCost(x,G,r_start,eta)
-  uout = (1./(2*diag(G)).*(diag(G).*x'-r_start'.*(G*x' - x'.*diag(G) + eta)).^2)';
+function uout = userCost(x,G,R_STAR,eta)
+  uout = (1./(2*diag(G)).*(diag(G).*x'-R_STAR'.*(G*x' - x'.*diag(G) + eta)).^2)';
 end
 
 
 %the projection funciton
-function x_t = project(y_t,x_bound,N)
+function x_t = project(y_t,X_BOUND,N)
   for i = 1:N
-    if x_bound(i,1) <= y_t(i) && y_t(i) <=x_bound(i,2)
+    if X_BOUND(i,1) <= y_t(i) && y_t(i) <=X_BOUND(i,2)
       x_t(i) = y_t(i);
     else
-      if y_t(i) < x_bound(i,1)
-        x_t(i) = x_bound(i,1);
+      if y_t(i) < X_BOUND(i,1)
+        x_t(i) = X_BOUND(i,1);
       else
-        x_t(i) = x_bound(i,2);
+        x_t(i) = X_BOUND(i,2);
       end
     end
   end
 end
 
-
-function outX = gradientTest(x,G,r_start,eta)
-  x_best = [0.016815,0.023363,0.031101, 0.016220];
-  outX = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta))./diag(G).*(x-x_best)' );
-  
-  %*(size(G,1)-1)
-end
-
-function outXP = gradientTestP(x,G,r_start,eta,p)
-  x_best = [0.016815,0.023363,0.031101, 0.016220];
-  outXP = sum( (diag(G).*x'-r_start'.*(G*x' - x'.*diag(G)+ eta)).*(p'./diag(G)).*(x-x_best)' );
-end
-
-function outP=findUnconvergeP(G,r_start,eta)
-  x = rand(2^20,4)*100;
-  %or
-  %x = rand(1,4)*100.*ones(2^20,4);
-  p = rand(2^20,4);
-  testParameter = gradientTestP(x,G,r_start,eta,p);
-  pos= find(testParameter < 0);
-  outP = p(pos',:);
-end
-
-
-function outP=testUnequation(G,r_start,eta)
-  x = rand(2^25,4)*100;
-  testParameter = gradientTest(x,G,r_start,eta);
-  pos= find(testParameter < 0);
-  outP = x(pos',:);
-end
-
-% types = {'Bernoulli','Log-normal','Markovian'};
-function  [G,ETA,outState] = stochasticFunct(G1,G2,ETA1,ETA2,lastState,p,PT,type)
-  switch type
+% types = {'Bernoulli','Log-normal','Markovian','No'};
+function  [G,ETA,outState] = stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType)
+  switch noiseType
     case 'Bernoulli'
-    [G,ETA,outState] = bernoulli(G1,G2,ETA1,ETA2,p);
+      [G,ETA,outState] = bernoulli(G1,G2,ETA1,ETA2,NOISE_P);
     case 'Log-normal'
-     [G,ETA,outState] = logNormal(G1,G2,ETA1,ETA2,p);
+      [G,ETA,outState] = logNormal(G1,G2,ETA1,ETA2,NOISE_P);
     case 'Markovian'
-     [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT);
+      [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,STATE,NOISE_P,PT);
+    case 'No'
+      G = G0;
+      ETA =ETA0;
+      outState = [-1,-1];
     otherwise
-      error('Delay type err');
+      error('Noise type err');
   end
   
 end
 
 function [G,ETA,outState] = bernoulli(G1,G2,ETA1,ETA2,p)
-
+  
   output = binornd(1,p(1));
   outputs =[output,1-output];
   G =  G1*outputs(1)+G2*outputs(2);
-% output = binornd(1,0.25);
-% outputs =[output,1-output];
   ETA = ETA1*outputs(1)+ETA2*outputs(2);
- 
   outState = [-1,-1];
 end
 
@@ -282,30 +251,28 @@ function [G,ETA,outState]= logNormal(G1,G2,ETA1,ETA2,p)
 end
 
 function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT)
- s1={G1,ETA1};
- s2={G2,ETA2};
- S = {s1,s2};
- if lastState ==[0,0]
-   output = binornd(1,p(1));
-   outState =[output,1-output];
- elseif lastState == [1,0]
-   output = binornd(1,PT(1,1));
-   outState =[output,1-output];
- elseif lastState ==[0,1]
-   output = binornd(1,PT(2,1));
-   outState =[output,1-output];
- end
- outputs =outState;
- %begain
- %output=binornd(1,p(1));
- %outputs =[output,1-output];
- if outputs(1) == 1
-   s= S{1};
- else
-   s=S{2};
- end
- G = s{1};
- ETA = s{2};
- %update probility
+  s1={G1,ETA1};
+  s2={G2,ETA2};
+  S = {s1,s2};
+  if lastState ==[0,0]
+    output = binornd(1,p(1));
+    outState =[output,1-output];
+  elseif lastState == [1,0]
+    output = binornd(1,PT(1,1));
+    outState =[output,1-output];
+  elseif lastState ==[0,1]
+    output = binornd(1,PT(2,1));
+    outState =[output,1-output];
+  end
+  outputs =outState;
+  %begain
+  if outputs(1) == 1
+    s= S{1};
+  else
+    s=S{2};
+  end
+  G = s{1};
+  ETA = s{2};
+  %update probility
 end
 
