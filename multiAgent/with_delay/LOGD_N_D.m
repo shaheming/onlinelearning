@@ -19,6 +19,8 @@ function out = LOGD_N_D(M)
   global R_STAR;
   global updateP;
   global oP;
+  global B;
+  B = 5; % BoundDelay
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
@@ -154,6 +156,13 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
   global ETA1;
   global ETA2;
   global PT;
+  global B;
+  
+  for i=1:N
+    heapCells{i}=MinHeap(B+1,ones(1,4)* inf);
+    heapCells{i}.ExtractMin();
+  end
+    
   
   choices=zeros(t_e,N);
   STATE = [0,0];
@@ -235,7 +244,7 @@ function [G,ETA,outState] = bernoulli(G1,G2,ETA1,ETA2,p)
   outputs =[output,1-output];
   G =  G1*outputs(1)+G2*outputs(2);
   ETA = ETA1*outputs(1)+ETA2*outputs(2);
-  outState = [-1,-1];
+  outState = outputs;
 end
 
 function [G,ETA,outState]= logNormal(G1,G2,ETA1,ETA2,p)
@@ -274,5 +283,28 @@ function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT)
   G = s{1};
   ETA = s{2};
   %update probility
+end
+
+
+function [feedBackTimes] = boundDelay(t,B,N)
+  feedBackTime = randi([1,B],1,N)+t;
+end
+
+function gDelayedFeedBack(B,t,heapCells,type)
+    switch lower(type)
+    case 'bound'
+       [feedBackTimes] = boundDelay(t,B,N);
+       for i = 1:N
+         heapCells{i}.InsertKey(feedBackTimes(1),-1,-1,-1);
+       end
+    end
+end
+
+function [feedBackTimes]=getFeedBackTime(B,t,heapCells,type)
+  
+end
+
+function [feedBackSum]=getFeedBackSum(B,t,heapCells,type)
+  
 end
 
