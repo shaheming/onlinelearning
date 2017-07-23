@@ -70,7 +70,6 @@ function out = LOGD_N(M)
   fprintf('Iterate %d turns\n',T);
   tic
   for i = types
-    
     rng(10);
     OGD_Primary(T,Y0,N,char(i),isNormalize);
     rng(10);
@@ -117,8 +116,7 @@ function  OGD_Primary(T,Y0,N,noiseType,isNormalize)
   
   
   %draw and save img
-  
-  tic;
+
   global oP;
   choices_2=ones(T+1,N).*oP;
   
