@@ -60,8 +60,8 @@ function out = LOGD_N_D(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   types = {'Bernoulli','Log-normal','Markovian','No'};
-%   types = {'No'};
-  isRegular = true;
+  types = {'No'};
+  isRegular = false;
  
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
@@ -163,7 +163,7 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
     heapCells{i}.ExtractMin();
   end
     
-  
+  feedBackSums =zeros(1,N);
   choices=zeros(t_e,N);
   STATE = [0,0];
   if t_b == 1
@@ -175,19 +175,28 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType)
   end
   
   for t = t_b : t_e
-
+    gDelayedFeedBack(B,t,heapCells,N,'bound');
+    
+    feedBackTimes = getFeedBackTime(heapCells,N);
+    % check if agent get feedback
+    
     eta1 = t +1;
     % my choice
     choices(t,:) = project(y,X_BOUND,N);
+    
+    if find(feedBackTimes == t+1)
+       % count grediant of every user
+       [feedBackSums]=getFeedBackSum(t,heapCells,feedBackTimes==ones(1,N).*(t+1),choices,G,R_STAR,ETA);
+    end
+    
+
     %y
     [G,ETA,STATE] =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
-    gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
+%     gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
     
-    if isRegular
-      y = y - (1 / eta1)*gradientTmp./updateP;
-    else
-      y = y - (1 / eta1)*gradientTmp;
-    end
+
+      y = y - (1 / eta1)*feedBackSums;
+    
     
   end
   outChoices = choices;
@@ -204,20 +213,7 @@ function uout = userCost(x,G,R_STAR,eta)
 end
 
 
-%the projection funciton
-function x_t = project(y_t,X_BOUND,N)
-  for i = 1:N
-    if X_BOUND(i,1) <= y_t(i) && y_t(i) <=X_BOUND(i,2)
-      x_t(i) = y_t(i);
-    else
-      if y_t(i) < X_BOUND(i,1)
-        x_t(i) = X_BOUND(i,1);
-      else
-        x_t(i) = X_BOUND(i,2);
-      end
-    end
-  end
-end
+
 
 % types = {'Bernoulli','Log-normal','Markovian','No'};
 function  [G,ETA,outState] = stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType)
@@ -286,25 +282,58 @@ function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT)
 end
 
 
-function [feedBackTimes] = boundDelay(t,B,N)
-  feedBackTime = randi([1,B],1,N)+t;
-end
 
-function gDelayedFeedBack(B,t,heapCells,type)
+function gDelayedFeedBack(B,t,heapCells,N,type)
     switch lower(type)
     case 'bound'
-       [feedBackTimes] = boundDelay(t,B,N);
+       [feedBackTimes] = randi([1,B],1,N)+t;
        for i = 1:N
-         heapCells{i}.InsertKey(feedBackTimes(1),-1,-1,-1);
+         heapCells{i}.InsertKey([feedBackTimes(i),t,-1,-1]);
        end
     end
 end
 
-function [feedBackTimes]=getFeedBackTime(B,t,heapCells,type)
+function [feedBackTimes]=getFeedBackTime(heapCells,N)
+  feedBackTimes = zeros(1,N);
+   for i = 1:N
+        out = num2cell( heapCells{i}.ReturnMin());
+        [feedBackTime,~,~,~] = out{:};
+        feedBackTimes(i) = feedBackTime;
+   end
+end
+
+function [feedBackSums]=getFeedBackSum(t,heapCells,agentFeedBack,choices,G,R_STAR,ETA)
+  feedBackSums = zeros(size(agentFeedBack));
+  for i= find(agentFeedBack==1)
+     while heapCells{i}.Count() > 0
+           out = num2cell(heapCells{i}.ReturnMin());
+          [feedBackTime,~,~,~] = out{:};
+           if feedBackTime - 1 > t
+            break;
+           else
+            out = num2cell(heapCells{i}.ExtractMin());
+            [~,originTime,~,~] = out{:};
+            gradients = gradient(choices(originTime,:),G,R_STAR,ETA);
+            feedBackSums(i)=feedBackSums(i)+ gradients(i);
+           end
+     end
+  end
   
 end
 
-function [feedBackSum]=getFeedBackSum(B,t,heapCells,type)
-  
+
+%the projection funciton
+function x_t = project(y_t,X_BOUND,N)
+  for i = 1:N
+    if X_BOUND(i,1) <= y_t(i) && y_t(i) <=X_BOUND(i,2)
+      x_t(i) = y_t(i);
+    else
+      if y_t(i) < X_BOUND(i,1)
+        x_t(i) = X_BOUND(i,1);
+      else
+        x_t(i) = X_BOUND(i,2);
+      end
+    end
+  end
 end
 
