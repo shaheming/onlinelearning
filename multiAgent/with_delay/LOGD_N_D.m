@@ -24,7 +24,7 @@ function out = LOGD_N_D(M)
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[0,0.4];
+  X_BOUND = ones(N,2).*[-400,400];
   Y0 = [0,0,0,0];
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
@@ -163,8 +163,9 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType)
   %   feedBackImg = zeros(4,t_e);
   agentIndex = ones(1,N);
   originTimesForNoOverlapDelay = ones(1,N);
-%   delayType = 'bound';
-delayType = 'log';
+  %   delayType = 'bound';
+%   delayType = 'log';
+  delayType ='linear';
   for i=1:N
     heapCells{i}=MinHeap(B+1,ones(1,4)* inf);
     heapCells{i}.ExtractMin();
@@ -326,7 +327,7 @@ function [feedBackTimes]=getFeedBackTime(heapCells,N,delayType,originTimes)
         feedBackTimes(i) = feedBackTime;
       end
     case 'linear'
-      feedBackTimes =  originTimes*50 +originTimes ;
+      feedBackTimes =  originTimes +originTimes ;
     case 'log'
       if originTimes(1)~= 1
         feedBackTimes = originTimes.*ceil(log2(originTimes)) + originTimes;
