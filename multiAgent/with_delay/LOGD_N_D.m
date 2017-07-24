@@ -20,7 +20,7 @@ function out = LOGD_N_D(M)
   global updateP;
   global oP;
   global B;
-  B = 1; % BoundDelay
+  B = 100; % BoundDelay
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
@@ -60,9 +60,12 @@ function out = LOGD_N_D(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   types = {'Bernoulli','Log-normal','Markovian','No'};
-  types = {'No'};
-  isRegular = false;
+  types = {'Log-normal'};
+  isNormalize = false;
+  %types = {'nodelay','bound','linear','log','square','exp','step'};
   delayTypes={'bound','bound','bound','bound'};
+    % delayType = 'bound';
+    % delayType = 'log';
   feedBackTypes = {'Injection','LOGD'};
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
@@ -70,19 +73,19 @@ function out = LOGD_N_D(M)
     tic
     rng(5);
     for j = feedBackTypes
-      OGD_Primary(T,Y0,N,char(i),char(j),isRegular,delayTypes);
+      OGD_Primary(T,Y0,N,char(i),char(j),isNormalize,delayTypes);
     end
   end
   fprintf('End Loop\n');
   %%%%%%%end%%%%%%%%
   toc;
   pause(3);
-  close all;
+%   close all;
 end
 
 
 
-function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular,delayTypes)
+function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isNormalize,delayTypes)
   
   %%%%%%%%%%%%%%%%%%
   %   SET TITLE  %
@@ -92,17 +95,18 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular,delayTypes)
   global img_path;
   global updateP;
   imgName = sprintf('%s-%s',algorithmName,datestr(now, 'HH-MM-SS'));
-  titleName = sprintf('%s-%s-P[p_1-p_4]-[%.3f,%.3f,%.3f,%.3f]',algorithmName,'Link[1-4]',updateP);
+  titleName = sprintf('%s-%s',algorithmName,'Link[1-4]');
   imgName = sprintf('%s-Noise:%s',imgName,noiseType);
   titleName = sprintf('%s-Noise:%s',titleName,noiseType);
   
-  if isRegular
-    imgName = sprintf('%s %s',imgName,'Normalize');
-    titleName = sprintf('%s %s',titleName,'Normalize');
-  else
-    imgName = sprintf('%s %s',imgName,'No-Normalize');
-    titleName = sprintf('%s %s',titleName,'No-Normalize');
-  end
+%  titleName = sprintf('%s-P[p1-p4]-[%.3f,%.3f,%.3f,%.3f]',titleName,updateP);
+%   if isNormalize
+%     imgName = sprintf('%s %s',imgName,'Normalize');
+%     titleName = sprintf('%s %s',titleName,'Normalize');
+%   else
+%     imgName = sprintf('%s %s',imgName,'No-Normalize');
+%     titleName = sprintf('%s %s',titleName,'No-Normalize');
+%   end
   
   imgName = sprintf('%s %s',imgName,feedBackType);
   titleName = sprintf('%s %s',titleName,feedBackType);
@@ -112,26 +116,35 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular,delayTypes)
   % Main iteration
   
   
-  choices_1=iteration(1,T,Y0,N,isRegular,noiseType,feedBackType,delayTypes);
+  choices_1=iteration(1,T,Y0,N,isNormalize,noiseType,feedBackType,delayTypes);
   
   
   %draw and save img
   global oP;
   choices_2=ones(T+1,N).*oP;
-   delayTypes={'bound','bound','bound','bound'};
+
   for i = 1:2:N*2
     lineName{i} =sprintf('p:%d %s',(i+1)/2,char(delayTypes((i+1)/2)));
-    lineName{i+1} =sprintf('p%d*',(i+1)/2);
+    lineName{i+1} =sprintf('p%d* Optimum',(i+1)/2);
   end
   
   xFig = figure('name',imgName,'NumberTitle','off');
   set(xFig,'position',get(0,'screensize'));
   hold on;
   
+  % set the optimum prediction and agent prediciton to the same color.
+  colorset =...
+    [
+    0.4588 ,0.6784,0.2314;
+    0.3294 ,0.7412,0.9255;
+    0.8353 ,0.3098,0.1137;
+    0.9216 ,0.6941,0.1882;
+    ];
+  
   for i = 1:N
-    plot([Y0(i);choices_1(:,i)],'DisplayName',char(lineName{i}),'LineWidth',lineWidth);
+    plot([Y0(i);choices_1(:,i)],'DisplayName',char(lineName{i}),'LineWidth',lineWidth,'color',colorset(i,:));
     hold on;
-    plot(choices_2(:,i),'-.','DisplayName',char(lineName{2*i}),'LineWidth',lineWidth);
+    plot(choices_2(:,i),'-.','DisplayName',char(lineName{2*i}),'LineWidth',lineWidth,'color',colorset(i,:));
     hold on;
   end
   
@@ -146,7 +159,7 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular,delayTypes)
 end
 
 
-function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType,delayTypes)
+function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType,feedBackType,delayTypes)
   
   global X_BOUND;
   global updateP;
@@ -163,8 +176,6 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType,dela
   
   %   feedBackImg = zeros(4,t_e);
   agentIndex = ones(1,N);
-  %   delayType = 'bound';
-  %   delayType = 'log';
   STATE = [0,0];
 %   noiseType ='Log-normal';
   for i=1:N
@@ -175,8 +186,6 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType,dela
   feedBackSums =zeros(1,N);
   choices=zeros(t_e,N);
   if t_b == 1
-    G = G0;
-    ETA = ETA0;
     x_0 = project(Y0,X_BOUND,N);
     %x0 feedback
     [G,ETA,STATE]  =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
@@ -192,23 +201,18 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType,dela
     
     feedBackTimes = getFeedBackTime(heapCells,N);
     % check if agent get feedback
-    
-    eta1 = t +100;
-    % my choice
-  
-    
+   
     checkFeedBack = feedBackTimes==agentIndex.*(t+1);
-    % feedBackImg(:,t) = checkFeedBack';
-    updateAgentPos = find(checkFeedBack == 1);
-    if updateAgentPos
+ 
+    %if any of user get feedback
+    if find(checkFeedBack == 1)
       % count grediant of every user
       [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,feedBackSums,feedBackType);
     end
     
     %y
-    
     %gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
-    
+    eta1 = t + 1;
     y = y - (1 / eta1)*feedBackSums;
     
     switch  feedBackType
@@ -327,6 +331,8 @@ function gDelayedFeedBack(t,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ET
         end
       case 'square'
         feedBackTime = t^2 + t;
+      case 'no'
+        feedBackTime = randi([1,1])+t;
     end
     
     
@@ -351,7 +357,7 @@ end
 function [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,lastFeedBackSums,feedBackType)
   feedBackSums = zeros(size(checkFeedBack));
   feedBackCounts = zeros(size(checkFeedBack));
-  
+  % update agent who get feedback
   for i= find(checkFeedBack==1)
     while heapCells{i}.Count() > 0
       out = num2cell(heapCells{i}.ReturnMin());
@@ -359,10 +365,8 @@ function [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,lastFeedBackSum
       if feedBackTime - 1 > t
         break;
       else
-        
         out = num2cell(heapCells{i}.ExtractMin());
         [~,~,gradient,~] = out{:};
-%         gradients = gradient(choices(originTime,:),G,R_STAR,ETA);
         feedBackSums(i)=feedBackSums(i)+ gradient;
         feedBackCounts(i) = feedBackCounts(i) + 1;
       end
@@ -372,7 +376,7 @@ function [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,lastFeedBackSum
   
   switch feedBackType
     case 'Injection'
-      % if there is no update will follow the update of the last iteration
+      % if there is no update will follow the updation of the last iteration
       pos = find(checkFeedBack==0);
       posUpdate = find(checkFeedBack==1);
       feedBackSums(posUpdate) = feedBackSums(posUpdate)./feedBackCounts(posUpdate);
