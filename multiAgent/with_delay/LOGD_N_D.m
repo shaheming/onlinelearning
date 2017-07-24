@@ -20,11 +20,11 @@ function out = LOGD_N_D(M)
   global updateP;
   global oP;
   global B;
-  B = 100; % BoundDelay
+  B = 1; % BoundDelay
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[-400,400];
+  X_BOUND = ones(N,2).*[0,400];
   Y0 = [0,0,0,0];
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
@@ -62,6 +62,7 @@ function out = LOGD_N_D(M)
   types = {'Bernoulli','Log-normal','Markovian','No'};
   types = {'No'};
   isRegular = false;
+  delayTypes={'bound','bound','bound','bound'};
   feedBackTypes = {'Injection','LOGD'};
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
@@ -69,7 +70,7 @@ function out = LOGD_N_D(M)
     tic
     rng(5);
     for j = feedBackTypes
-      OGD_Primary(T,Y0,N,char(i),char(j),isRegular);
+      OGD_Primary(T,Y0,N,char(i),char(j),isRegular,delayTypes);
     end
   end
   fprintf('End Loop\n');
@@ -81,7 +82,7 @@ end
 
 
 
-function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular)
+function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular,delayTypes)
   
   %%%%%%%%%%%%%%%%%%
   %   SET TITLE  %
@@ -111,15 +112,15 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular)
   % Main iteration
   
   
-  choices_1=iteration(1,T,Y0,N,isRegular,noiseType,feedBackType);
+  choices_1=iteration(1,T,Y0,N,isRegular,noiseType,feedBackType,delayTypes);
   
   
   %draw and save img
   global oP;
   choices_2=ones(T+1,N).*oP;
-  
+   delayTypes={'bound','bound','bound','bound'};
   for i = 1:2:N*2
-    lineName{i} =sprintf('p:%d',(i+1)/2);
+    lineName{i} =sprintf('p:%d %s',(i+1)/2,char(delayTypes((i+1)/2)));
     lineName{i+1} =sprintf('p%d*',(i+1)/2);
   end
   
@@ -145,7 +146,7 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isRegular)
 end
 
 
-function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType)
+function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType,delayTypes)
   
   global X_BOUND;
   global updateP;
@@ -162,19 +163,20 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType)
   
   %   feedBackImg = zeros(4,t_e);
   agentIndex = ones(1,N);
-  originTimesForNoOverlapDelay = ones(1,N);
   %   delayType = 'bound';
-%   delayType = 'log';
-  delayType ='linear';
+  %   delayType = 'log';
+  STATE = [0,0];
+%   noiseType ='Log-normal';
   for i=1:N
-    heapCells{i}=MinHeap(B+1,ones(1,4)* inf);
+    heapCells{i}=MinHeap(t_e,ones(1,4)* inf);
     heapCells{i}.ExtractMin();
   end
   
   feedBackSums =zeros(1,N);
   choices=zeros(t_e,N);
-  STATE = [0,0];
   if t_b == 1
+    G = G0;
+    ETA = ETA0;
     x_0 = project(Y0,X_BOUND,N);
     %x0 feedback
     [G,ETA,STATE]  =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
@@ -183,28 +185,28 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType)
   end
   
   for t = t_b : t_e
-    gDelayedFeedBack(B,t,heapCells,N,delayType);
     
-    feedBackTimes = getFeedBackTime(heapCells,N,delayType,originTimesForNoOverlapDelay);
+    choices(t,:) = project(y,X_BOUND,N);
+      
+    gDelayedFeedBack(t,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ETA0,ETA1,ETA2,R_STAR,PT,NOISE_P);
+    
+    feedBackTimes = getFeedBackTime(heapCells,N);
     % check if agent get feedback
     
     eta1 = t +100;
     % my choice
-    choices(t,:) = project(y,X_BOUND,N);
+  
     
     checkFeedBack = feedBackTimes==agentIndex.*(t+1);
     % feedBackImg(:,t) = checkFeedBack';
     updateAgentPos = find(checkFeedBack == 1);
     if updateAgentPos
       % count grediant of every user
-      [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,choices,G,R_STAR,ETA,...
-        feedBackSums,feedBackType,delayType,originTimesForNoOverlapDelay);
-      
-       originTimesForNoOverlapDelay(updateAgentPos) = originTimesForNoOverlapDelay(updateAgentPos)+1;
+      [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,feedBackSums,feedBackType);
     end
     
     %y
-    [G,ETA,STATE] =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
+    
     %gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
     
     y = y - (1 / eta1)*feedBackSums;
@@ -212,9 +214,9 @@ function outChoices=iteration(t_b,t_e,Y0,N,isRegular,noiseType,feedBackType)
     switch  feedBackType
       case  'Injection'
       otherwise
-        feedBackSums = zeros(1,N);        
+        feedBackSums = zeros(1,N);
     end
-  
+    
   end
   outChoices = choices;
   %   feedBackImg = feedBackImg.*(1:4)';
@@ -235,7 +237,6 @@ end
 function uout = userCost(x,G,R_STAR,eta)
   uout = (1./(2*diag(G)).*(diag(G).*x'-R_STAR'.*(G*x' - x'.*diag(G) + eta)).^2)';
 end
-
 
 
 
@@ -280,92 +281,94 @@ function [G,ETA,outState]= logNormal(G1,G2,ETA1,ETA2,p)
 end
 
 function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT)
-  s1={G1,ETA1};
-  s2={G2,ETA2};
-  S = {s1,s2};
-  if lastState ==[0,0]
+  if lastState == [0,0]
     output = binornd(1,p(1));
     outState =[output,1-output];
   elseif lastState == [1,0]
     output = binornd(1,PT(1,1));
     outState =[output,1-output];
-  elseif lastState ==[0,1]
+  elseif lastState == [0,1]
     output = binornd(1,PT(2,1));
     outState =[output,1-output];
   end
   outputs =outState;
-  %begain
-  if outputs(1) == 1
-    s= S{1};
-  else
-    s=S{2};
-  end
-  G = s{1};
-  ETA = s{2};
+   
   %update probility
-end
-
-
-
-function gDelayedFeedBack(B,t,heapCells,N,feedBackType)
-  switch lower(feedBackType)
-    case 'bound'
-      [feedBackTimes] = randi([1,B],1,N)+t;
-      for i = 1:N
-        heapCells{i}.InsertKey([feedBackTimes(i),t,-1,-1]);
-      end
+  if outputs(1) == 1
+    G = G1;
+    ETA = ETA1;
+  else
+    G = G2;
+    ETA = ETA2;
   end
 end
 
-function [feedBackTimes]=getFeedBackTime(heapCells,N,delayType,originTimes)
+
+
+function gDelayedFeedBack(t,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ETA0,ETA1,ETA2,R_STAR,PT,NOISE_P)
+  index = 1;
+  persistent  STATE;
+  if isempty(STATE)
+   STATE  = [0,0];
+  end
+  [G,ETA,STATE] =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
+  gradients = gradient(choices(t,:),G,R_STAR,ETA);
+  for i = delayTypes
+    switch lower(char(i))
+      case 'bound'
+        [feedBackTime] = randi([1,B])+t;
+      case 'linear'
+        feedBackTime =  t * 2 + t ;
+      case 'log'
+        if originTimes(1)~= 1
+          feedBackTime = t.*ceil(log2(t)) + t;
+        else
+          feedBackTime = t * 2;
+        end
+      case 'square'
+        feedBackTime = t^2 + t;
+    end
+    
+    
+    heapCells{index}.InsertKey([feedBackTime,t,gradients(index),-1]);
+    
+    index = index + 1;
+  end
+end
+
+
+function [feedBackTimes]=getFeedBackTime(heapCells,N)
   feedBackTimes = zeros(1,N);
-  switch delayType
-    case 'bound'
-      for i = 1:N
-        out = num2cell( heapCells{i}.ReturnMin());
-        [feedBackTime,~,~,~] = out{:};
-        feedBackTimes(i) = feedBackTime;
-      end
-    case 'linear'
-      feedBackTimes =  originTimes +originTimes ;
-    case 'log'
-      if originTimes(1)~= 1
-        feedBackTimes = originTimes.*ceil(log2(originTimes)) + originTimes;
-      else
-        feedBackTimes = originTimes * 2;
-      end
-    case 'square'
-      feedBackTimes = originTimes.^2 + originTimes;
+  
+  for i = 1:N
+    out = num2cell( heapCells{i}.ReturnMin());
+    [feedBackTime,~,~,~] = out{:};
+    feedBackTimes(i) = feedBackTime;
   end
+  
 end
 
-function [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,choices,G,R_STAR,ETA,lastFeedBackSums,feedBackType,delayType,originTimes)
+function [feedBackSums]=getFeedBackSum(t,heapCells,checkFeedBack,lastFeedBackSums,feedBackType)
   feedBackSums = zeros(size(checkFeedBack));
   feedBackCounts = zeros(size(checkFeedBack));
-  switch delayType
-    case 'bound'
-      for i= find(checkFeedBack==1)
-        while heapCells{i}.Count() > 0
-          out = num2cell(heapCells{i}.ReturnMin());
-          [feedBackTime,~,~,~] = out{:};
-          if feedBackTime - 1 > t
-            break;
-          else
-            out = num2cell(heapCells{i}.ExtractMin());
-            [~,originTime,~,~] = out{:};
-            gradients = gradient(choices(originTime,:),G,R_STAR,ETA);
-            feedBackSums(i)=feedBackSums(i)+ gradients(i);
-            feedBackCounts(i) = feedBackCounts(i) + 1;
-          end
-        end
+  
+  for i= find(checkFeedBack==1)
+    while heapCells{i}.Count() > 0
+      out = num2cell(heapCells{i}.ReturnMin());
+      [feedBackTime,~,~,~] = out{:};
+      if feedBackTime - 1 > t
+        break;
+      else
+        
+        out = num2cell(heapCells{i}.ExtractMin());
+        [~,~,gradient,~] = out{:};
+%         gradients = gradient(choices(originTime,:),G,R_STAR,ETA);
+        feedBackSums(i)=feedBackSums(i)+ gradient;
+        feedBackCounts(i) = feedBackCounts(i) + 1;
       end
-    otherwise % linear log squr
-      if find(checkFeedBack==1)
-        gradients = gradient(choices(originTimes(1),:),G,R_STAR,ETA);
-        feedBackSums = gradients;
-        feedBackCounts = feedBackCounts + 1;
-      end
+    end
   end
+  
   
   switch feedBackType
     case 'Injection'
@@ -393,4 +396,3 @@ function x_t = project(y_t,X_BOUND,N)
     end
   end
 end
-
