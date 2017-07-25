@@ -24,8 +24,9 @@ function out = LOGD_N_D(M)
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[0,400];
+  X_BOUND = ones(N,2).*[0,100];
   Y0 = [0,0,0,0];
+%    Y0 = rand(1,N)*0.4;
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
   R_STAR = [0.5,0.5,0.5,0.5];
@@ -60,10 +61,10 @@ function out = LOGD_N_D(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   types = {'Bernoulli','Log-normal','Markovian','No'};
-  types = {'Log-normal'};
+%      types = {'Log-normal'};
   isNormalize = false;
-  %types = {'nodelay','bound','linear','log','square','exp','step'};
-  delayTypes={'bound','bound','bound','bound'};
+  %types = {'nodelay','bound','linear','log','square','exp','step','No','sqrt'};
+  delayTypes={'log','sqrt','linear','bound'};
     % delayType = 'bound';
     % delayType = 'log';
   feedBackTypes = {'Injection','LOGD'};
@@ -71,16 +72,17 @@ function out = LOGD_N_D(M)
   fprintf('Iterate %d turns\n',T);
   for i = types
     tic
-    rng(5);
+%     rng(5);
     for j = feedBackTypes
       OGD_Primary(T,Y0,N,char(i),char(j),isNormalize,delayTypes);
     end
+%     close all;
   end
   fprintf('End Loop\n');
   %%%%%%%end%%%%%%%%
   toc;
-  pause(3);
-%   close all;
+  pause(1);
+  close all;
 end
 
 
@@ -90,7 +92,7 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isNormalize,delayTypes)
   %%%%%%%%%%%%%%%%%%
   %   SET TITLE  %
   %%%%%%%%%%%%%%%%%%
-  lineWidth = 1;
+  lineWidth = 0.8;
   global algorithmName;
   global img_path;
   global updateP;
@@ -125,11 +127,12 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isNormalize,delayTypes)
 
   for i = 1:2:N*2
     lineName{i} =sprintf('p:%d %s',(i+1)/2,char(delayTypes((i+1)/2)));
-    lineName{i+1} =sprintf('p%d* Optimum',(i+1)/2);
+    lineName{i+1} =sprintf('p%d*',(i+1)/2);
   end
   
   xFig = figure('name',imgName,'NumberTitle','off');
-  set(xFig,'position',get(0,'screensize'));
+   set(xFig,'position',get(0,'screensize'));
+ 
   hold on;
   
   % set the optimum prediction and agent prediciton to the same color.
@@ -154,8 +157,7 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isNormalize,delayTypes)
   title(titleName,'FontSize',20,'FontWeight','normal');
   hold off;
   
-  saveas(xFig,strcat('img/',fileName),'png');
-  
+  print(xFig,strcat('img/',fileName),'-dpng','-r500');    
 end
 
 
@@ -197,7 +199,7 @@ function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType,feedBackType,de
     
     choices(t,:) = project(y,X_BOUND,N);
       
-    gDelayedFeedBack(t,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ETA0,ETA1,ETA2,R_STAR,PT,NOISE_P);
+    gDelayedFeedBack(t,t_e,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ETA0,ETA1,ETA2,R_STAR,PT,NOISE_P);
     
     feedBackTimes = getFeedBackTime(heapCells,N);
     % check if agent get feedback
@@ -269,7 +271,7 @@ function [G,ETA,outState] = bernoulli(G1,G2,ETA1,ETA2,p)
   outputs =[output,1-output];
   G =  G1*outputs(1)+G2*outputs(2);
   ETA = ETA1*outputs(1)+ETA2*outputs(2);
-  outState = outputs;
+  outState = [0,0];
 end
 
 function [G,ETA,outState]= logNormal(G1,G2,ETA1,ETA2,p)
@@ -281,7 +283,7 @@ function [G,ETA,outState]= logNormal(G1,G2,ETA1,ETA2,p)
   %log normal eta
   mu=log(ETA_E)-1/2*ones(size(ETA_E));
   ETA = lognrnd(mu,ones(size(ETA1)));
-  outState = [-1,-1];
+  outState = [0,0];
 end
 
 function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT)
@@ -295,10 +297,10 @@ function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT)
     output = binornd(1,PT(2,1));
     outState =[output,1-output];
   end
-  outputs =outState;
-   
+
+%   outState=outputs;
   %update probility
-  if outputs(1) == 1
+  if outState(1) == 1
     G = G1;
     ETA = ETA1;
   else
@@ -309,10 +311,10 @@ end
 
 
 
-function gDelayedFeedBack(t,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ETA0,ETA1,ETA2,R_STAR,PT,NOISE_P)
+function gDelayedFeedBack(t,t_e,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ETA0,ETA1,ETA2,R_STAR,PT,NOISE_P)
   index = 1;
   persistent  STATE;
-  if isempty(STATE)
+  if isempty(STATE) || t==t_e
    STATE  = [0,0];
   end
   [G,ETA,STATE] =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
@@ -322,15 +324,17 @@ function gDelayedFeedBack(t,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ET
       case 'bound'
         [feedBackTime] = randi([1,B])+t;
       case 'linear'
-        feedBackTime =  t * 2 + t ;
+        feedBackTime =  ceil(t /5 )+ t ;
       case 'log'
-        if originTimes(1)~= 1
-          feedBackTime = t.*ceil(log2(t)) + t;
+        if t ~= 1
+          feedBackTime = ceil(t*ceil(log2(t))/100) + t;
         else
           feedBackTime = t * 2;
         end
       case 'square'
         feedBackTime = t^2 + t;
+      case 'sqrt'
+        feedBackTime = ceil(sqrt(t)) + t;
       case 'no'
         feedBackTime = randi([1,1])+t;
     end
