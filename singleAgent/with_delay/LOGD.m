@@ -201,7 +201,7 @@ function [feedBackTime] = getFeedBack(t,type)
       [feedBackTime] =  t*50+t;
     case 'log'
        if t ~= 1
-         feedBackTime = t*ceil(log2(t)) + t ;
+         feedBackTime = ceil( t*ceil(log2(t))/20) + t ;
        else
          feedBackTime  = 2;
        end
