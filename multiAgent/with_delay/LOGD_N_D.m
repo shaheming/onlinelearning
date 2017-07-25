@@ -324,7 +324,7 @@ function gDelayedFeedBack(t,t_e,heapCells,choices,delayTypes,noiseType,B,G0,G1,G
       case 'bound'
         [feedBackTime] = randi([1,B])+t;
       case 'linear'
-        feedBackTime =  ceil(t /5 )+ t ;
+        feedBackTime =  ceil(t/5 )+ t ;
       case 'log'
         if t ~= 1
           feedBackTime = ceil(t*ceil(log2(t))/100) + t;
