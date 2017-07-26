@@ -135,11 +135,11 @@ In this condition, in every turns , every angent has the probability $p_{i}$ to 
 
 To simulate this condition, you can call the function `MLOGD_U_N(M,P)` will P is the 1*4 vector, which is the update probability in every iteration for every agent. (For example, [1/2,1/2,1/2,1/2]). Then the program will generate unnormalized and normalozed result.
 
-#### 3.1.4 Multi-agent LOGD with stochastic Update and noise
+##### 3.1.4 Multi-agent LOGD with stochastic Update and noise
 
 In this part you can add noise by just call the same function told in the last section with additional parameter 1. (e.g `MLOGD_U_N(M,P,1)`) Then the program will run automatically to add noise to the algorithm told in the last section, both normalize and unnormalize. There are four different type (no-noise , bernoulli noise, logNormal noise, and markovian noise) As a result , you will get eight images in the `img/MLOGD_U_M/` folder.
 
 **Note: ** In the folder of `img/` put 3 three subfolders which include results under three different P. First, P=[1/2,1/2,1/2,1/2]. Second, P=[0.4259 ,0.8384 ,0.7423 ,0.0005]  found by myself. Third, P= [0.9977 ,0.8468 ,0.0713 ,0.0049] found by Sun Min.
 
- 
+#### 3.2 with_delay
 

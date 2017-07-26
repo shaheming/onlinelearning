@@ -61,10 +61,10 @@ function out = LOGD_N_D(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   types = {'Bernoulli','Log-normal','Markovian','No'};
-%      types = {'Log-normal'};
+  types = {'No'};
   isNormalize = false;
   %types = {'nodelay','bound','linear','log','square','exp','step','No','sqrt'};
-  delayTypes={'log','sqrt','linear','bound'};
+  delayTypes={'log','log','log','log'};
     % delayType = 'bound';
     % delayType = 'log';
   feedBackTypes = {'Injection','LOGD'};
@@ -327,7 +327,7 @@ function gDelayedFeedBack(t,t_e,heapCells,choices,delayTypes,noiseType,B,G0,G1,G
         feedBackTime =  ceil(t/5 )+ t ;
       case 'log'
         if t ~= 1
-          feedBackTime = ceil(t*ceil(log2(t))/100) + t;
+          feedBackTime = ceil(t*ceil(log2(t))/10) + t;
         else
           feedBackTime = t * 2;
         end
