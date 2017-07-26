@@ -1,11 +1,9 @@
-function out = LOGD_N_D(M)
-  %use doubling tricking to iterat
-  
-  mkdir img LOGD_N_D;
+function out = MLOGD_N_D_U(M)  
+  mkdir img MLOGD_N_D_U;
   global img_path;
-  img_path ='LOGD_N_D/';
+  img_path ='MLOGD_N_D_U/';
   global algorithmName;
-  algorithmName = 'SGD-N-U-D';
+  algorithmName = 'MLOGD-N-D-U';
   
   global X_BOUND;
   global G1;
@@ -61,13 +59,13 @@ function out = LOGD_N_D(M)
   % main function  %
   %%%%%%%%%%%%%%%%%%
   types = {'Bernoulli','Log-normal','Markovian','No'};
-  types = {'No'};
+%    types = {'No'};
   isNormalize = false;
   %types = {'nodelay','bound','linear','log','square','exp','step','No','sqrt'};
   delayTypes={'log','log','log','log'};
-    % delayType = 'bound';
-    % delayType = 'log';
-  feedBackTypes = {'Injection','LOGD'};
+  % delayType = 'bound';
+  % delayType = 'log';
+  feedBackTypes = {'LOGD','Injection'};
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
   for i = types
@@ -101,15 +99,7 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isNormalize,delayTypes)
   imgName = sprintf('%s-Noise:%s',imgName,noiseType);
   titleName = sprintf('%s-Noise:%s',titleName,noiseType);
   
-%  titleName = sprintf('%s-P[p1-p4]-[%.3f,%.3f,%.3f,%.3f]',titleName,updateP);
-%   if isNormalize
-%     imgName = sprintf('%s %s',imgName,'Normalize');
-%     titleName = sprintf('%s %s',titleName,'Normalize');
-%   else
-%     imgName = sprintf('%s %s',imgName,'No-Normalize');
-%     titleName = sprintf('%s %s',titleName,'No-Normalize');
-%   end
-  
+
   imgName = sprintf('%s %s',imgName,feedBackType);
   titleName = sprintf('%s %s',titleName,feedBackType);
   
@@ -157,7 +147,7 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isNormalize,delayTypes)
   title(titleName,'FontSize',20,'FontWeight','normal');
   hold off;
   
-  print(xFig,strcat('img/',fileName),'-dpng','-r500');    
+  print(xFig,strcat('img/',fileName),'-dpng','-r0');    
 end
 
 
@@ -225,13 +215,6 @@ function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType,feedBackType,de
     
   end
   outChoices = choices;
-  %   feedBackImg = feedBackImg.*(1:4)';
-  %   figure;
-  %   for i = 1:N
-  %
-  %   scatter(1:t_e,feedBackImg(i,:),0.5);
-  %   hold on;
-  %   end
 end
 
 % the difference of reward function U
@@ -327,7 +310,7 @@ function gDelayedFeedBack(t,t_e,heapCells,choices,delayTypes,noiseType,B,G0,G1,G
         feedBackTime =  ceil(t/5 )+ t ;
       case 'log'
         if t ~= 1
-          feedBackTime = ceil(t*ceil(log2(t))/10) + t;
+          feedBackTime = ceil(t*ceil(log(t))/20) + t;
         else
           feedBackTime = t * 2;
         end
