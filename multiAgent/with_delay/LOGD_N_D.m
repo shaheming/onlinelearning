@@ -329,7 +329,7 @@ function [feedBackTimes]=getFeedBackTime(heapCells,N,delayType,originTimes)
       feedBackTimes =  originTimes*50 +originTimes ;
     case 'log'
       if originTimes(1)~= 1
-        feedBackTimes = ceil(originTimes.*ceil(log(originTimes))) + originTimes;
+        feedBackTimes = ceil(originTimes.*ceil(log(originTimes))/10) + originTimes;
       else
         feedBackTimes = originTimes * 2;
       end
