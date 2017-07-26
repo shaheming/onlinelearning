@@ -1,4 +1,4 @@
-function out = MLOGD_N_D_U(M)  
+function out = MLOGD_N_D_U(varargin)
   mkdir img MLOGD_N_D_U;
   global img_path;
   img_path ='MLOGD_N_D_U/';
@@ -18,13 +18,14 @@ function out = MLOGD_N_D_U(M)
   global updateP;
   global oP;
   global B;
-  B = 100; % BoundDelay
-  % the maxiums turn will iterate T times;
+  B = 1; % BoundDelay
+  
+  M = varargin{1};
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
   X_BOUND = ones(N,2).*[0,100];
   Y0 = [0,0,0,0];
-%    Y0 = rand(1,N)*0.4;
+  %    Y0 = rand(1,N)*0.4;
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
   R_STAR = [0.5,0.5,0.5,0.5];
@@ -53,76 +54,137 @@ function out = MLOGD_N_D_U(M)
   ETA1=[0.07;0.14;0.21;0.07];
   ETA2=[0.11;0.22;0.33;0.11];
   
+  
+  
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%
+  % deal with parameter  %
+  %%%%%%%%%%%%%%%%%%%%%%%%
+  % noiseTypes = {'Bernoulli','Log-normal','Markovian','No'};
   updateP = [1,1,1,1];
   %updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
-  %%%%%%%%%%%%%%%%%%
-  % main function  %
-  %%%%%%%%%%%%%%%%%%
-  types = {'Bernoulli','Log-normal','Markovian','No'};
-%    types = {'No'};
-  isNormalize = false;
-  %types = {'nodelay','bound','linear','log','square','exp','step','No','sqrt'};
-  delayTypes={'log','log','log','log'};
-  % delayType = 'bound';
-  % delayType = 'log';
-  feedBackTypes = {'LOGD','Injection'};
-  fprintf('Begin Loop\n');
-  fprintf('Iterate %d turns\n',T);
-  for i = types
-    tic
-%     rng(5);
-    for j = feedBackTypes
-      OGD_Primary(T,Y0,N,char(i),char(j),isNormalize,delayTypes);
+  %delayTypes = {'nodelay','bound','linear','log','No','sqrt'};
+  %delayTypes={'log','log','log','log'};
+  %feedBackTypes = {'LOGD','Injection'};
+  
+  options = struct('noiseTypes',{{{'No'}}},...
+    'delayTypes',{{{'no','no','no','no'}}},...
+    'updateP',{num2cell([1,1,1,1],[1,2])},'feedBackTypes',{{{'LOGD'}}});
+  
+  %# read the acceptable names
+  optionNames = fieldnames(options);
+  %# count arguments
+  if length(varargin) > 1
+    nArgs = length(varargin(2:end));
+    if round(nArgs/2)~=nArgs/2
+      error('EXAMPLE needs propertyName/propertyValue pairs')
     end
-%     close all;
   end
-  fprintf('End Loop\n');
+  
+  for pair = reshape(varargin(2:end),2,[]) %# pair is {propName;propValue}
+    inpName = pair{1}; %# make case insensitive
+    
+    if any(strcmp(inpName,optionNames))
+      %# overwrite options. If you want you can test for the right class here
+      %# Also, if you find out that there is an option you keep getting wrong,
+      %# you can use "if strcmp(inpName,'problemOption'),testMore,end"-statements
+      options(1).(inpName) = pair(2);
+    else
+      error('%s is not a recognized parameter name',inpName)
+    end
+  end
+  
+  
+  
+  if  options(1).updateP{:} == [1,1,1,1]
+    isUseP = false;
+  else
+    updateP = options(1).updateP{:};
+    isUseP = true;
+  end
+  
+  noiseTypes =  options(1).noiseTypes{:};
+  delayTypes = options(1).delayTypes{:};
+  feedBackTypes =  options(1).feedBackTypes{:};
+  isNormalize = false;
+  
+  
+ 
+  for i = noiseTypes
+    tic
+    %rng(5);
+    for j = feedBackTypes
+      if isUseP
+        OGD_Primary(T,Y0,N,char(i),char(j),isUseP,~isNormalize,delayTypes);
+        OGD_Primary(T,Y0,N,char(i),char(j),isUseP,isNormalize,delayTypes);
+      else
+        OGD_Primary(T,Y0,N,char(i),char(j),isUseP,~isNormalize,delayTypes);
+      end
+      toc;
+    end
+    close all;
+  end
+ 
   %%%%%%%end%%%%%%%%
   toc;
-  pause(1);
-  close all;
 end
 
 
 
-function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isNormalize,delayTypes)
+function    OGD_Primary(T,Y0,N,noiseType,feedBackType,isUseP,isNormalize,delayTypes)
   
   %%%%%%%%%%%%%%%%%%
-  %   SET TITLE  %
+  %   SET TITLE    %
   %%%%%%%%%%%%%%%%%%
   lineWidth = 0.8;
-  global algorithmName;
   global img_path;
+  
   global updateP;
-  imgName = sprintf('%s-%s',algorithmName,datestr(now, 'HH-MM-SS'));
-  titleName = sprintf('%s-%s',algorithmName,'Link[1-4]');
+  
+  if isUseP
+    titleName = sprintf('%s-[p1-p4]%.3f-%.3f-%.3f-%.3f','MLOGD-UpdateP-Link[1-4]',updateP);
+    imgName = sprintf('%s','MLOGD-UpdateP-Link[1-4]');
+    if isNormalize
+      titleName = sprintf('%s-%s',titleName,'Normalize');
+      imgName = sprintf('%s-%s',imgName,'Normalize');
+    else
+      titleName = sprintf('%s-%s',titleName,'No-Normalize');
+      imgName = sprintf('%s-%s',imgName,'No-Normalize');
+    end
+  else
+    titleName = sprintf('%s','MLOGD-Link[1-4]');
+    imgName =  sprintf('%s','MLOGD-Link[1-4]');
+  end
+  
+  
   imgName = sprintf('%s-Noise:%s',imgName,noiseType);
   titleName = sprintf('%s-Noise:%s',titleName,noiseType);
   
-
+  
   imgName = sprintf('%s %s',imgName,feedBackType);
   titleName = sprintf('%s %s',titleName,feedBackType);
   
+  
   fileName = sprintf('%s%s',img_path,imgName);
   fprintf('%s\n',titleName);
+  
+  fprintf('Begin Loop\n');
+  fprintf('Iterate %d turns\n',T);
   % Main iteration
-  
-  
-  choices_1=iteration(1,T,Y0,N,isNormalize,noiseType,feedBackType,delayTypes);
-  
-  
+  choices_1=iteration(1,T,Y0,N,isUseP,isNormalize,noiseType,feedBackType,delayTypes);
+  fprintf('End Loop\n');
   %draw and save img
   global oP;
   choices_2=ones(T+1,N).*oP;
-
+  
   for i = 1:2:N*2
     lineName{i} =sprintf('p:%d %s',(i+1)/2,char(delayTypes((i+1)/2)));
     lineName{i+1} =sprintf('p%d*',(i+1)/2);
   end
   
   xFig = figure('name',imgName,'NumberTitle','off');
-   set(xFig,'position',get(0,'screensize'));
- 
+  set(xFig,'position',get(0,'screensize'));
+  
   hold on;
   
   % set the optimum prediction and agent prediciton to the same color.
@@ -147,11 +209,11 @@ function  OGD_Primary(T,Y0,N,noiseType,feedBackType,isNormalize,delayTypes)
   title(titleName,'FontSize',20,'FontWeight','normal');
   hold off;
   
-  print(xFig,strcat('img/',fileName),'-dpng','-r0');    
+  print(xFig,strcat('img/',fileName),'-dpng','-r100');
 end
 
 
-function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType,feedBackType,delayTypes)
+function outChoices=iteration(t_b,t_e,Y0,N,isUseP,isNormalize,noiseType,feedBackType,delayTypes)
   
   global X_BOUND;
   global updateP;
@@ -169,7 +231,7 @@ function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType,feedBackType,de
   %   feedBackImg = zeros(4,t_e);
   agentIndex = ones(1,N);
   STATE = [0,0];
-%   noiseType ='Log-normal';
+  %   noiseType ='Log-normal';
   for i=1:N
     heapCells{i}=MinHeap(t_e,ones(1,4)* inf);
     heapCells{i}.ExtractMin();
@@ -181,21 +243,31 @@ function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType,feedBackType,de
     x_0 = project(Y0,X_BOUND,N);
     %x0 feedback
     [G,ETA,STATE]  =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
-    y = Y0 - 1*gradient(x_0,G,R_STAR,ETA);
+    
+    if isUseP
+      gradientTmp = binornd(1,updateP).*gradient(x_0,G,R_STAR,ETA);
+      if isNormalize
+        gradientTmp = gradientTmp./updateP;
+      end
+    else
+      gradientTmp = gradient(x_0,G,R_STAR,ETA);
+    end
+    
+    y = Y0 - 1*gradientTmp;
     
   end
   
   for t = t_b : t_e
     
     choices(t,:) = project(y,X_BOUND,N);
-      
+    
     gDelayedFeedBack(t,t_e,heapCells,choices,delayTypes,noiseType,B,G0,G1,G2,ETA0,ETA1,ETA2,R_STAR,PT,NOISE_P);
     
     feedBackTimes = getFeedBackTime(heapCells,N);
     % check if agent get feedback
-   
+    
     checkFeedBack = feedBackTimes==agentIndex.*(t+1);
- 
+    
     %if any of user get feedback
     if find(checkFeedBack == 1)
       % count grediant of every user
@@ -205,12 +277,25 @@ function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType,feedBackType,de
     %y
     %gradientTmp = binornd(1,updateP).*gradient(choices(t,:),G,R_STAR,ETA);
     eta1 = t + 1;
-    y = y - (1 / eta1)*feedBackSums;
+    
+    
+    if isUseP
+      gradientTmp = binornd(1,updateP).*feedBackSums;
+      if isNormalize
+        gradientTmp = gradientTmp./updateP;
+      end
+    else
+      gradientTmp = feedBackSums;
+    end
+    
+    y = y - (1 / eta1)*gradientTmp;
     
     switch  feedBackType
       case  'Injection'
-      otherwise
+      case  'LOGD'
         feedBackSums = zeros(1,N);
+      otherwise
+        error('feedBackType Error!')
     end
     
   end
@@ -229,7 +314,7 @@ end
 
 
 
-% types = {'Bernoulli','Log-normal','Markovian','No'};
+% noiseTypes = {'Bernoulli','Log-normal','Markovian','No'};
 function  [G,ETA,outState] = stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType)
   switch noiseType
     case 'Bernoulli'
@@ -243,7 +328,7 @@ function  [G,ETA,outState] = stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE
       ETA =ETA0;
       outState = [-1,-1];
     otherwise
-      error('Noise type err');
+      error('Noise type ERR');
   end
   
 end
@@ -280,8 +365,8 @@ function [G,ETA,outState] =  markovian(G1,G2,ETA1,ETA2,lastState,p,PT)
     output = binornd(1,PT(2,1));
     outState =[output,1-output];
   end
-
-%   outState=outputs;
+  
+  %   outState=outputs;
   %update probility
   if outState(1) == 1
     G = G1;
@@ -298,7 +383,7 @@ function gDelayedFeedBack(t,t_e,heapCells,choices,delayTypes,noiseType,B,G0,G1,G
   index = 1;
   persistent  STATE;
   if isempty(STATE) || t==t_e
-   STATE  = [0,0];
+    STATE  = [0,0];
   end
   [G,ETA,STATE] =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
   gradients = gradient(choices(t,:),G,R_STAR,ETA);
@@ -320,6 +405,8 @@ function gDelayedFeedBack(t,t_e,heapCells,choices,delayTypes,noiseType,B,G0,G1,G
         feedBackTime = ceil(sqrt(t)) + t;
       case 'no'
         feedBackTime = randi([1,1])+t;
+      otherwise
+        error('Delay type err');
     end
     
     
