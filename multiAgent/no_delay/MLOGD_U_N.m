@@ -1,11 +1,11 @@
-function out = LOGD_N(M)
+function out = MLOGD_U_N(varargin)
   %use doubling tricking to iterat
   
-  mkdir img LOGD_N;
+  mkdir img MLOGD_U_N;
   global img_path;
-  img_path ='LOGD_N/';
+  img_path ='MLOGD_U_N/';
   global algorithmName;
-  algorithmName = 'SGD-N-U';
+  algorithmName = 'MLOGD_U_N';
   
   global X_BOUND;
   global G1;
@@ -19,10 +19,12 @@ function out = LOGD_N(M)
   global R_STAR;
   global updateP;
   global oP;
+  
+  M = varargin{1};
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[0,0.04];
+  X_BOUND = ones(N,2).*[0,10^4];
   Y0 = [0,0,0,0];
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
@@ -54,27 +56,52 @@ function out = LOGD_N(M)
   
   %updateP = [ 1/2 1/2 ,1/2 ,1/2];
   %sha
-  updateP=[ 0.4259 ,0.8384 ,0.7423 ,0.0005];
+  %updateP=[ 0.4259 ,0.8384 ,0.7423 ,0.0005];
   %sun
   %updateP = [0.9977 ,0.8468 ,0.0713 ,0.0049];
-  updateP = [1,1,1,1];
+  
+  types = {'No'};
+  if size(varargin,2) == 1
+    isUseP = false;
+    updateP=[1,1,1,1];
+  elseif size(varargin,2) >= 2
+    if size(varargin{2},2) < N
+      error('P dimensions is not match')
+    else
+      isUseP = true;
+      updateP = varargin{2};
+    end
+    if size(varargin,2) == 3
+      types = {'No','Log-normal','Bernoulli','Markovian'};
+    end
+  end
+  
+  if isUseP
+    xFigTitle = sprintf('%s-[p1-p4]%.3f-%.3f-%.3f-%.3f','MLOGD-UpdateP-Link[1-4]',updateP);
+    xFigName = sprintf('%s','MLOGD-UpdateP-Link[1-4]');
+  else
+    xFigTitle = sprintf('%s','MLOGD-Link[1-4]');
+    xFigName =  sprintf('%s','MLOGD-Link[1-4]');
+  end
+  
   
   %%%%%%%%%%%%%%%%%%
   % main function  %
   %%%%%%%%%%%%%%%%%%
-  types = {'No','Log-normal','Bernoulli','Markovian'};
-  %    types = {'Bernoulli','Markovian'};
-     types = {'No'};
+  
+  
   isNormalize = true;
   
   fprintf('Begin Loop\n');
   fprintf('Iterate %d turns\n',T);
   tic
   for i = types
-     rng(5);
-%     OGD_Primary(T,Y0,N,char(i),isNormalize);
-%     rng(10);
-    OGD_Primary(T,Y0,N,char(i),~isNormalize);
+    if isUseP
+      OGD_Primary(T,Y0,N,char(i),isUseP,~isNormalize,xFigTitle,xFigName);
+      OGD_Primary(T,Y0,N,char(i),isUseP,isNormalize,xFigTitle,xFigName);
+    else
+      OGD_Primary(T,Y0,N,char(i),isUseP,~isNormalize,xFigTitle,xFigName);
+    end
     toc
   end
   fprintf('End Loop\n');
@@ -85,7 +112,7 @@ end
 
 
 
-function  OGD_Primary(T,Y0,N,noiseType,isNormalize)
+function  OGD_Primary(T,Y0,N,noiseType,isUseP,isNormalize,xFigTitle,xFigName)
   
   %%%%%%%%%%%%%%%%%%
   %   SET TITLE  %
@@ -94,30 +121,30 @@ function  OGD_Primary(T,Y0,N,noiseType,isNormalize)
   global algorithmName;
   global img_path;
   global updateP;
-  imgName = sprintf('%s-%s',algorithmName,datestr(now, 'dd-mm-yy-HH-MM-SS'));
+  imgName = sprintf('%s-%s',algorithmName);
   titleName = sprintf('%s-%s-P[p_1-p_4]-[%.3f,%.3f,%.3f,%.3f]',algorithmName,'Link[1-4]',updateP);
-  imgName = sprintf('%s-Noise:%s',imgName,noiseType);
-  titleName = sprintf('%s-Noise:%s',titleName,noiseType);
   
-  if isNormalize
-    imgName = sprintf('%s %s',imgName,'Normalize');
-    titleName = sprintf('%s %s',titleName,'Normalize');
-  else
-    imgName = sprintf('%s %s',imgName,'No-Normalize');
-    titleName = sprintf('%s %s',titleName,'No-Normalize');
+  if isUseP && isNormalize
+    titleName = sprintf('%s-%s',xFigTitle,'Normalize');
+    imgName = sprintf('%s-%s',xFigName,'Normalize');
+  elseif isUseP && ~isNormalize
+    titleName = sprintf('%s-%s',xFigTitle,'No-Normalize');
+    imgName = sprintf('%s-%s',xFigName,'No-Normalize');
   end
   
+  
+  imgName = sprintf('%s-Noise:%s',imgName,noiseType);
+  titleName = sprintf('%s-Noise:%s',titleName,noiseType);
   
   fileName = sprintf('%s%s',img_path,imgName);
   fprintf('%s\n',titleName);
   % Main iteration
   
-  
   choices_1=iteration(1,T,Y0,N,isNormalize,noiseType);
   
   
   %draw and save img
-
+  
   global oP;
   choices_2=ones(T+1,N).*oP;
   
@@ -130,10 +157,18 @@ function  OGD_Primary(T,Y0,N,noiseType,isNormalize)
   set(xFig,'position',get(0,'screensize'));
   hold on;
   
+  colorset =...
+    [
+    0.4588 ,0.6784,0.2314;
+    0.3294 ,0.7412,0.9255;
+    0.8353 ,0.3098,0.1137;
+    0.9216 ,0.6941,0.1882;
+    ];
+  
   for i = 1:N
-    plot([Y0(i);choices_1(:,i)],'DisplayName',char(lineName{i}),'LineWidth',lineWidth);
+    plot([Y0(i);choices_1(:,i)],'DisplayName',char(lineName{i}),'LineWidth',lineWidth,'color',colorset(i,:));
     hold on;
-    plot(choices_2(:,i),'-.','DisplayName',char(lineName{2*i}),'LineWidth',lineWidth);
+    plot(choices_2(:,i),'-.','DisplayName',char(lineName{2*i}),'LineWidth',lineWidth,'color',colorset(i,:));
     hold on;
   end
   
@@ -143,7 +178,7 @@ function  OGD_Primary(T,Y0,N,noiseType,isNormalize)
   title(titleName,'FontSize',20,'FontWeight','normal');
   hold off;
   
-  saveas(xFig,strcat('img/',fileName),'png');
+  saveas(xFig,strcat('img/',fileName,datestr(now,'HH-MM-SS')),'png');
   
 end
 
@@ -169,8 +204,6 @@ function outChoices=iteration(t_b,t_e,Y0,N,isNormalize,noiseType)
     x_0 = project(Y0,X_BOUND,N);
     %x0 feedback
     [G,ETA,STATE]  =  stochasticFunct(G0,G1,G2,ETA0,ETA1,ETA2,STATE,NOISE_P,PT,noiseType);
-    %     gradientTmp = binornd(1,updateP).*gradient(x_0,G,R_STAR,ETA);
-    %     y = Y0 - 1*gradientTmp./updateP;
     gradientTmp = gradient(x_0,G,R_STAR,ETA);
     y = Y0 - 1*gradientTmp;
   end

@@ -119,13 +119,27 @@ In the setion, I have extented the LOGD algorithm, inllustrated in the above sec
 
 #### 3.1 no_delay
 
-##### 3.1.1 Multi-agent LOGD
+##### 3.1.1 Basic Multi-agent LOGD
 
-To begain with, I have simulated the 4 agent LOGD algorithm. To run the code you can just call the 
+To begain with, I have simulated the 4 agent LOGD algorithm. To run the code you can just call the function `MLOGD_U_N(M)` 
 
 ##### 3.1.2 Multi-agent LOGD with stochastic noise
 
 In this section, I have simulated the  Multi-agent LOGD under the stochastic noise condiction. You can run the `MLOGDS(M)` to get simulation results in the `img/MLOGDS/` folder.
 
+Or, use can call the function
 
+##### 3.1.3 Multi-agent LOGD with stochastic Update
+
+In this condition, in every turns , every angent has the probability $p_{i}$ to can receive feedback to update the parameter. For every agent $x_{i} \in \mathcal{X}$ we can find a set of $P$ make the $x_{i}$ not converge.  To find the $P$ , you can run the `find_p()` . If we change our derivative part of our algorithm by dividing $p_{i}$ the $x_{i}$ will converge. We call this algorithm as normalize.
+
+To simulate this condition, you can call the function `MLOGD_U_N(M,P)` will P is the 1*4 vector, which is the update probability in every iteration for every agent. (For example, [1/2,1/2,1/2,1/2]). Then the program will generate unnormalized and normalozed result.
+
+#### 3.1.4 Multi-agent LOGD with stochastic Update and noise
+
+In this part you can add noise by just call the same function told in the last section with additional parameter 1. (e.g `MLOGD_U_N(M,P,1)`) Then the program will run automatically to add noise to the algorithm told in the last section, both normalize and unnormalize. There are four different type (no-noise , bernoulli noise, logNormal noise, and markovian noise) As a result , you will get eight images in the `img/MLOGD_U_M/` folder.
+
+**Note: ** In the folder of `img/` put 3 three subfolders which include results under three different P. First, P=[1/2,1/2,1/2,1/2]. Second, P=[0.4259 ,0.8384 ,0.7423 ,0.0005]  found by myself. Third, P= [0.9977 ,0.8468 ,0.0713 ,0.0049] found by Sun Min.
+
+ 
 
