@@ -1,4 +1,4 @@
-function out = MLOGD_N_D_U(varargin)
+function MLOGD_N_D_U(varargin)
   mkdir img MLOGD_N_D_U;
   global img_path;
   img_path ='MLOGD_N_D_U/';
@@ -18,7 +18,7 @@ function out = MLOGD_N_D_U(varargin)
   global updateP;
   global oP;
   global B;
-  B = 1; % BoundDelay
+  B = 100; % BoundDelay
   
   M = varargin{1};
   T = 2^(M)-1; % avoid the last value to 0
@@ -53,9 +53,6 @@ function out = MLOGD_N_D_U(varargin)
   
   ETA1=[0.07;0.14;0.21;0.07];
   ETA2=[0.11;0.22;0.33;0.11];
-  
-  
-  
   
   %%%%%%%%%%%%%%%%%%%%%%%%
   % deal with parameter  %
@@ -148,8 +145,8 @@ function    OGD_Primary(T,Y0,N,noiseType,feedBackType,isUseP,isNormalize,delayTy
       titleName = sprintf('%s-%s',titleName,'Normalize');
       imgName = sprintf('%s-%s',imgName,'Normalize');
     else
-      titleName = sprintf('%s-%s',titleName,'No-Normalize');
-      imgName = sprintf('%s-%s',imgName,'No-Normalize');
+      titleName = sprintf('%s:%s',titleName,'No-Normalize');
+      imgName = sprintf('%s %s',imgName,'No-Normalize');
     end
   else
     titleName = sprintf('%s','MLOGD-Link[1-4]');
@@ -157,11 +154,11 @@ function    OGD_Primary(T,Y0,N,noiseType,feedBackType,isUseP,isNormalize,delayTy
   end
   
   
-  imgName = sprintf('%s-Noise:%s',imgName,noiseType);
-  titleName = sprintf('%s-Noise:%s',titleName,noiseType);
+  imgName = sprintf('%s-Noise-%s',imgName,noiseType);
+  titleName = sprintf('%s Noise:%s',titleName,noiseType);
   
   
-  imgName = sprintf('%s %s',imgName,feedBackType);
+  imgName = sprintf('%s-%s',imgName,feedBackType);
   titleName = sprintf('%s %s',titleName,feedBackType);
   
   
