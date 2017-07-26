@@ -1,10 +1,11 @@
-function out = LOGD_M(M)
+function out = MLOGD(M)
   %use doubling tricking to iterate
   % M = 18; % 2 ^ 15 = 32768
-  mkdir img LOGD_M;
-  
+  mkdir img MLOGD;
+  global algorithmName;
+  algorithmName = 'Multi-agnet-LOGD';
   global img_path;
-  img_path ='LOGD_M/';
+  img_path ='MLOGD/';
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   % T = 50000;
@@ -113,6 +114,7 @@ function  OGD_Primary(T,y0,N)
   hold off;
   global img_path;
   
+   global algorithmName;
   xFigName_1 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-1-2','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
   xFigName_2 = sprintf('%s%s-%s-%s',img_path,'LOGD_M-Link-3-4','X',datestr(now, 'dd-mm-yy-HH-MM-SS'));
   saveas(xFig,strcat('img/',xFigName_1),'png');
