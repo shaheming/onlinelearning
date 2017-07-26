@@ -24,7 +24,7 @@ function out = LOGD_N_D(M)
   % the maxiums turn will iterate T times;
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[0,0.4];
+  X_BOUND = ones(N,2).*[0,10^4];
   Y0 = [0,0,0,0];
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
   ETA0 = [0.1;0.2;0.3;0.1];
@@ -67,7 +67,7 @@ function out = LOGD_N_D(M)
   fprintf('Iterate %d turns\n',T);
   for i = types
     tic
-    rng(5);
+%     rng(5);
     for j = feedBackTypes
       OGD_Primary(T,Y0,N,char(i),char(j),isRegular);
     end
@@ -329,7 +329,7 @@ function [feedBackTimes]=getFeedBackTime(heapCells,N,delayType,originTimes)
       feedBackTimes =  originTimes*50 +originTimes ;
     case 'log'
       if originTimes(1)~= 1
-        feedBackTimes = originTimes.*ceil(log2(originTimes)) + originTimes;
+        feedBackTimes = ceil(originTimes.*ceil(log(originTimes))) + originTimes;
       else
         feedBackTimes = originTimes * 2;
       end
