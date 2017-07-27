@@ -23,7 +23,7 @@ function MLOGD_N_D_U(varargin)
   M = varargin{1};
   T = 2^(M)-1; % avoid the last value to 0
   N = 4;
-  X_BOUND = ones(N,2).*[0,100];
+  X_BOUND = ones(N,2).*[0,0.04];
   Y0 = [0,0,0,0];
   %    Y0 = rand(1,N)*0.4;
   G0 = [6,1,2,1,;1,6,1,2;2,1,6,1;1,2,1,6];
@@ -60,8 +60,8 @@ function MLOGD_N_D_U(varargin)
   % noiseTypes = {'Bernoulli','Log-normal','Markovian','No'};
   updateP = [1,1,1,1];
   %updateP = [ 0.4259 ,0.8384 ,0.7423 ,0.0005];
-  %delayTypes = {'nodelay','bound','linear','log','No','sqrt'};
-  %delayTypes={'log','log','log','log'};
+  %delayTypes = {'bound','linear','log','No','sqrt'};
+  %delayTypes={'bound','bound','bound','bound'};
   %feedBackTypes = {'LOGD','Injection'};
   
   options = struct('noiseTypes',{{{'No'}}},...
@@ -106,14 +106,14 @@ function MLOGD_N_D_U(varargin)
   isNormalize = false;
   
   
- 
+  tic;
   for i = noiseTypes
-    tic
-    %rng(5);
     for j = feedBackTypes
       if isUseP
         OGD_Primary(T,Y0,N,char(i),char(j),isUseP,~isNormalize,delayTypes);
+        toc;
         OGD_Primary(T,Y0,N,char(i),char(j),isUseP,isNormalize,delayTypes);
+        toc;
       else
         OGD_Primary(T,Y0,N,char(i),char(j),isUseP,~isNormalize,delayTypes);
       end
@@ -135,27 +135,24 @@ function    OGD_Primary(T,Y0,N,noiseType,feedBackType,isUseP,isNormalize,delayTy
   %%%%%%%%%%%%%%%%%%
   lineWidth = 0.8;
   global img_path;
-  
   global updateP;
   
+  imgName = sprintf('%s-Noise-%s','MLOGD-Link[1-4]',noiseType);
+  titleName = sprintf('%s Noise:%s','MLOGD-Link[1-4]',noiseType);
+  
   if isUseP
-    titleName = sprintf('%s-[p1-p4]%.3f-%.3f-%.3f-%.3f','MLOGD-UpdateP-Link[1-4]',updateP);
-    imgName = sprintf('%s','MLOGD-UpdateP-Link[1-4]');
+    titleName = sprintf('%s-%s-[p1-p4]%.3f-%.3f-%.3f-%.3f',titleName,'MLOGD-UpdateP-Link[1-4]',updateP);
+    imgName = sprintf('%s-%s',imgName,'MLOGD-UpdateP-Link[1-4]');
     if isNormalize
-      titleName = sprintf('%s-%s',titleName,'Normalize');
+      titleName = sprintf('%s %s',titleName,'Normalize');
       imgName = sprintf('%s-%s',imgName,'Normalize');
     else
-      titleName = sprintf('%s:%s',titleName,'No-Normalize');
-      imgName = sprintf('%s %s',imgName,'No-Normalize');
+      titleName = sprintf('%s %s',titleName,'No-Normalize');
+      imgName = sprintf('%s-%s',imgName,'No-Normalize');
     end
-  else
-    titleName = sprintf('%s','MLOGD-Link[1-4]');
-    imgName =  sprintf('%s','MLOGD-Link[1-4]');
   end
   
-  
-  imgName = sprintf('%s-Noise-%s',imgName,noiseType);
-  titleName = sprintf('%s Noise:%s',titleName,noiseType);
+ 
   
   
   imgName = sprintf('%s-%s',imgName,feedBackType);

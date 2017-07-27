@@ -53,9 +53,9 @@ In our research, we use the LOGD algorithm to simulate the choices at signgle-ag
 
 ### 2 singleAgent 
 
-The folder tree
+The folder tree:
 
-```
+```shell
 ├── bigdata
 │   ├── MULTI_MACHINE.m
 │   └── img
@@ -93,7 +93,7 @@ At same time, I use three kind of algorithm to deal with these condition. The fi
 
 You can run the `Loop(M)` function to implement the three algorithm told above under the seven delay evironment. 
 
-**Note: ** the parameter M in this function is same as the parameter in the last section, which is used to set iteration times.
+**Note: ** the parameter` M` in this function is same as the parameter in the last section, which is used to set iteration times.
 
 The result shows that under the delay of 'nodelay','bound','linear','log' and 'step' the **X** will converge, and the **StepsizeLOGD** and **InjectionLOGD**  algorithms permform better than the basic **LOGD** algorithm.
 
@@ -116,8 +116,22 @@ Note the image(`MULI-MACHINE-ALL-UNIFORM-E[a]=5 E[b]=50.png`) in the folder show
 ### 3 multiAgent
 
 In the setion, I have extented the LOGD algorithm, inllustrated in the above section to the mutiagent condition. The diagram is the structure of my folder. 
+```shell
+├── no_delay
+│   ├── MLOGDS.m
+│   ├── MLOGD_U_N.m
+│   ├── find_p.m
+│   ├── img
+│   └── unstableP.txt
+└── with_delay
+    ├── Heap.m
+    ├── MLOGD_N_D_U.m
+    ├── MinHeap.m
+    └── img
+```
 
 #### 3.1 no_delay
+
 
 ##### 3.1.1 Basic Multi-agent LOGD
 
@@ -143,3 +157,26 @@ In this part you can add noise by just call the same function told in the last s
 
 #### 3.2 with_delay
 
+In the section I have finished more sophisticated simulation which combines malti-agent ,stochastic update, noise and delay that I have introduced in the single-agent section together.
+
+You can run the simulation by calling the `MLOGD_N_D_U(varargin)` function. You can select one of the combinations or several combinations by set the input parameters.
+
+```matlab
+delayTypes {'no','bound','linear','log','sqrt'}; % select one or more
+noiseTypes = {'No','Bernoulli','Log-normal','Markovian'};% select one or more
+feedBackTypes = {'LOGD','Injection'};% select one or more
+updateP = [1/2,1/2,1/2,1/2];
+
+delayTypes={'log','log','log','log'};
+% Note the delayTypes is 1*4 cell which represent every agent's delay model. You can set different delay model to different agent (e.g)delayTypes={'bound','bound','sqrt','log'};
+
+MLOGD_N_D_U(M,'noiseTypes',noiseTypes,'delayTypes',delayTypes,'feedBackTypes',feedBackTypes,'updateP',updateP);
+```
+
+If you select all types of delay, noise feebBack and set an update probability, the program will run all combinations. Also you can just onaly can the function with parameter m, `MLOGD_N_D_U(M)` . With the defualt setting, the program will run simulation  of Basic Multi-agent LOGD, in the 3.1.1. To enable or disable the stochastic update, use can set the `updateP = [1,1,1,1]` or just omit this paired parameter.
+
+```matlab
+MLOGD_N_D_U(M,'noiseTypes',noiseTypes,'delayTypes',delayTypes,'feedBackTypes',feedBackTypes);
+```
+
+ 
