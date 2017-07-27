@@ -4,3 +4,5 @@ log.diff
 *.png
 delay.m
 img/
+*.pdf
+
